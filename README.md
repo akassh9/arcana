@@ -3,6 +3,8 @@
 A tarot reading room for macOS. Native SwiftUI, no dependencies — every card is
 drawn by code and every sound is synthesised at launch.
 
+![A Three Fates reading in Arcana: the written question set above the spread, three cards, and the reading spoken as verse](docs/arcana.png)
+
 ```bash
 ./build.sh && open build/Arcana.app
 ```
