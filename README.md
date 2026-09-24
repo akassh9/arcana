@@ -96,7 +96,10 @@ things never move by themselves. The sky's gradients, rays and wheel are
 drawn once and change only while the question is held. Everything that moves
 on its own lives in small leaf views with their own clocks — the near-sky
 canvas at 20fps, the title's light only during its sweep, the thread only while
-light is running along it, the written line only while its ink is wet. When the cards are returned, each redraws only while
+light is running along it, the written line only while its ink is wet. When
+no one can see the room — the window covered, minimised or hidden, the screens
+asleep — every clock rests and the audio engine stops; muting stops it too.
+Everything is reckoned from the time, so it all resumes in step. When the cards are returned, each redraws only while
 its own ink is sinking, and the sky is never touched — a return costs less than
 the ask. Idle, the app sits around 10–11% of one core —
 about where it was before the sky was added.

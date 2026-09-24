@@ -326,14 +326,14 @@ private struct NearSky: View {
   let reduceMotion: Bool
 
   var body: some View {
-    let recent = game.flashes.last.map { Date().timeIntervalSinceReferenceDate - $0.born < 2.3 }
     // quickens only for the ask: the sky never answers the return
     let lively =
-      (game.holding && game.phase == .invocation) || game.charge > 0.001 || recent == true
+      (game.holding && game.phase == .invocation) || game.charge > 0.001 || game.skyQuick
     let asking = game.phase == .invocation
 
     TimelineView(
-      .animation(minimumInterval: lively ? 1.0 / 30.0 : 1.0 / 20.0, paused: reduceMotion)
+      .animation(
+        minimumInterval: lively ? 1.0 / 30.0 : 1.0 / 20.0, paused: reduceMotion || !game.visible)
     ) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
       let t = reduceMotion ? 0 : now

@@ -69,6 +69,17 @@ final class Game {
   var homeward = false  // the cards have turned over; what is left on the table goes
   var roomLive = true  // the invocation can be touched; off until it has come back
 
+  /// The window can be seen and the screens are awake. When it can't, every
+  /// clock rests and the room falls silent; all of it is reckoned from the
+  /// time, so it resumes in step.
+  var visible = true {
+    didSet { if visible != oldValue { Sfx.shared.present = visible } }
+  }
+  /// A flash has just gone out across the sky; the near sky's clock runs
+  /// quick until its ripple is gone, then slows by itself.
+  var skyQuick = false
+  private var quickUntil: TimeInterval = 0
+
   /// What is holding the breath. A key and a finger can hold it together;
   /// it is let go only when the last of them lets go.
   enum Holder { case key, pointer }
@@ -415,7 +426,9 @@ final class Game {
       while true {
         try? await Task.sleep(nanoseconds: 13_000_000_000)
         guard self.round == round, self.phase == .reading else { return }
-        if self.inspecting == nil && !self.weaving && !self.returning { self.runSpark() }
+        if self.inspecting == nil && !self.weaving && !self.returning && self.visible {
+          self.runSpark()
+        }
       }
     }
   }
@@ -590,6 +603,13 @@ final class Game {
   func flash(at p: CGPoint, strength: Double = 1) {
     flashes.append(Flash(point: p, born: now, strength: strength))
     if flashes.count > 10 { flashes.removeFirst(flashes.count - 10) }
+    quickUntil = max(quickUntil, now + 2.3)
+    if !skyQuick { skyQuick = true }
+    Task { @MainActor [weak self] in
+      try? await Task.sleep(nanoseconds: 2_350_000_000)
+      guard let self, self.now >= self.quickUntil else { return }
+      self.skyQuick = false
+    }
   }
 }
 

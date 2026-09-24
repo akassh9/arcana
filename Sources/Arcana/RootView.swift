@@ -31,7 +31,7 @@ struct RootView: View {
       .onChange(of: geo.size, initial: true) { _, s in stage = s }
     }
     .background(Palette.pearl)
-    .overlay(WindowSetup().frame(width: 0, height: 0))
+    .overlay(WindowSetup(game: game).frame(width: 0, height: 0))
     .focusable()
     .focusEffectDisabled()
     .focused($focused)
@@ -369,7 +369,10 @@ private struct Thread: View {
     let h: CGFloat = 40
     let xs = (0..<game.need).map { layout.slot($0).x }
 
-    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !game.threadLive)) { tl in
+    TimelineView(
+      .animation(
+        minimumInterval: 1.0 / 30.0, paused: reduceMotion || !game.threadLive || !game.visible)
+    ) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
       let landed = game.landed
       let spark = game.spark
@@ -563,7 +566,7 @@ private struct Invocation: View {
           .opacity(quiet)
           .allowsHitTesting(false)
 
-        Title(reduceMotion: reduceMotion)
+        Title(reduceMotion: reduceMotion, resting: !game.visible)
           .padding(.top, 22)
           .opacity(quiet)
           .allowsHitTesting(false)
@@ -626,7 +629,7 @@ private struct QuestionLine: View {
           WrittenLine(
             text: q.text, marked: q.marked, born: q.born, wet: q.wet, spentAt: q.spentAt,
             inkWidth: q.inkWidth, step: q.lastStep, charge: c, giving: q.giving,
-            reduceMotion: reduceMotion
+            reduceMotion: reduceMotion, resting: !game.visible
           )
           .transition(
             .asymmetric(
@@ -663,6 +666,7 @@ private struct WrittenLine: View {
   let charge: Double
   let giving: Int
   let reduceMotion: Bool
+  let resting: Bool
 
   var body: some View {
     let rest = 0.62 + 0.36 * charge
@@ -670,7 +674,9 @@ private struct WrittenLine: View {
     Color.clear
       .frame(width: 0, height: 0)
       .overlay(alignment: .leading) {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !wet)) { tl in
+        TimelineView(
+          .animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !wet || resting)
+        ) { tl in
           InkLine(
             text: text, marked: marked, born: born, now: tl.date.timeIntervalSinceReferenceDate,
             dry: reduceMotion || !wet, rest: rest, charge: charge, giving: reduceMotion ? 0 : giving,
@@ -832,6 +838,8 @@ private struct Arrive: ViewModifier {
 /// flame moving past gilt.
 private struct Title: View {
   let reduceMotion: Bool
+  /// No one can see it; the light waits.
+  let resting: Bool
 
   var body: some View {
     let word = Text("ARCANA").font(.display(62)).tracking(20)
@@ -839,7 +847,7 @@ private struct Title: View {
       .foregroundStyle(Palette.text)
       .shadow(color: Palette.goldLit.opacity(0.55), radius: 22)
       .overlay {
-        TimelineView(Bursts(period: 12, length: 3.3, fps: 24, paused: reduceMotion)) { tl in
+        TimelineView(Bursts(period: 12, length: 3.3, fps: 24, paused: reduceMotion || resting)) { tl in
           let k =
             tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12) / 3.2
           LinearGradient(
@@ -1196,7 +1204,7 @@ private struct Inspector: View {
     let h = min(480, size.height * 0.62)
     let w = h * 0.565
 
-    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { tl in
+    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !game.visible)) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
       let age = reduceMotion ? 10 : now - game.openedAt
       let b = reduceMotion ? 0.5 : Sky.breath(now)
@@ -1398,10 +1406,16 @@ private struct BowlGlyph: View {
 // ===================================================================
 
 struct WindowSetup: NSViewRepresentable {
+  let game: Game
+
+  func makeCoordinator() -> Watcher { Watcher() }
+
   func makeNSView(context: Context) -> NSView {
     let probe = NSView()
+    let watcher = context.coordinator
     DispatchQueue.main.async {
       guard let window = probe.window else { return }
+      watcher.watch(window, game: game)
       window.titlebarAppearsTransparent = true
       window.backgroundColor = NSColor(
         red: 0.978, green: 0.968, blue: 0.948, alpha: 1)
@@ -1426,4 +1440,57 @@ struct WindowSetup: NSViewRepresentable {
   }
 
   func updateNSView(_ nsView: NSView, context: Context) {}
+
+  static func dismantleNSView(_ nsView: NSView, coordinator: Watcher) { coordinator.stop() }
+
+  /// Whether anyone can see the room: the window is on screen and not
+  /// covered, minimised or hidden, the screens are awake, and this is the
+  /// user's session. Kept as one flag on the game, which changes rarely.
+  @MainActor
+  final class Watcher {
+    private var tokens: [(NotificationCenter, NSObjectProtocol)] = []
+    private weak var window: NSWindow?
+    private weak var game: Game?
+    private var awake = true
+    private var here = true
+
+    func watch(_ window: NSWindow, game: Game) {
+      guard self.window == nil else { return }
+      self.window = window
+      self.game = game
+      let local = NotificationCenter.default
+      let shared = NSWorkspace.shared.notificationCenter
+      observe(local, NSWindow.didChangeOcclusionStateNotification, window) { _ in }
+      observe(shared, NSWorkspace.screensDidSleepNotification) { $0.awake = false }
+      observe(shared, NSWorkspace.screensDidWakeNotification) { $0.awake = true }
+      observe(shared, NSWorkspace.sessionDidResignActiveNotification) { $0.here = false }
+      observe(shared, NSWorkspace.sessionDidBecomeActiveNotification) { $0.here = true }
+      update()
+    }
+
+    func stop() {
+      for (center, token) in tokens { center.removeObserver(token) }
+      tokens = []
+    }
+
+    private func observe(
+      _ center: NotificationCenter, _ name: Notification.Name, _ object: AnyObject? = nil,
+      _ change: @escaping @MainActor (Watcher) -> Void
+    ) {
+      let token = center.addObserver(forName: name, object: object, queue: .main) { [weak self] _ in
+        MainActor.assumeIsolated {
+          guard let self else { return }
+          change(self)
+          self.update()
+        }
+      }
+      tokens.append((center, token))
+    }
+
+    private func update() {
+      guard let window, let game else { return }
+      let seen = window.occlusionState.contains(.visible) && awake && here
+      if game.visible != seen { game.visible = seen }
+    }
+  }
 }

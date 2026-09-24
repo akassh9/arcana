@@ -15,9 +15,12 @@ final class Sfx {
 
   enum Cue { case cut, slide, land, tick }
 
-  var enabled = true {
-    didSet { engine.mainMixerNode.outputVolume = enabled ? master : 0 }
-  }
+  /// Sound on or off: the bowl, top right, and `m`.
+  var enabled = true { didSet { hear() } }
+  /// Someone is there to hear it: the window can be seen and the screens
+  /// are awake.
+  var present = true { didSet { hear() } }
+  private var audible: Bool { enabled && present }
 
   private let master: Float = 0.5
   private let engine = AVAudioEngine()
@@ -44,6 +47,9 @@ final class Sfx {
   private var droneLevel: Float = 0
   private var droneTarget: Float = 0.42
   private var swellFade: Task<Void, Never>?
+  private var easing: Task<Void, Never>?
+  private var fading: Task<Void, Never>?
+  private var hearing = true  // the engine is meant to be running
   private var live = false
 
   private init() {
@@ -117,13 +123,7 @@ final class Sfx {
       }
     }
 
-    Task { @MainActor [weak self] in
-      while let self {
-        self.droneLevel += (self.droneTarget - self.droneLevel) * 0.035
-        self.drone.volume = self.droneLevel
-        try? await Task.sleep(nanoseconds: 33_000_000)
-      }
-    }
+    ease()
   }
 
   private func install(
@@ -153,7 +153,7 @@ final class Sfx {
   }
 
   private func restart() {
-    guard !engine.isRunning else { return }
+    guard hearing, !engine.isRunning else { return }
     do {
       try engine.start()
       (air + hand + [swell]).forEach { $0.play() }
@@ -208,11 +208,70 @@ final class Sfx {
   }
 
   /// The drone's level, 0…1. It eases there.
-  func mood(_ level: Float) { droneTarget = min(1, max(0, level)) }
+  func mood(_ level: Float) {
+    droneTarget = min(1, max(0, level))
+    ease()
+  }
+
+  /// Ease the drone toward its level; the loop stops once it is there, so
+  /// a room at rest wakes nothing.
+  private func ease() {
+    guard easing == nil else { return }
+    easing = Task { @MainActor [weak self] in
+      while let self, abs(self.droneTarget - self.droneLevel) > 0.001 {
+        self.droneLevel += (self.droneTarget - self.droneLevel) * 0.035
+        self.drone.volume = self.droneLevel
+        try? await Task.sleep(for: .milliseconds(33), tolerance: .milliseconds(8))
+      }
+      guard let self else { return }
+      self.droneLevel = self.droneTarget
+      self.drone.volume = self.droneLevel
+      self.easing = nil
+    }
+  }
+
+  /// When the room can't be heard — muted, or no one there — the engine is
+  /// let go altogether, not just turned down: its clock, its reverbs and its
+  /// players stop, and the Mac may sleep. When it can be heard again, the
+  /// drone rises back in step with the sky's breath.
+  private func hear() {
+    let want = audible
+    guard want != hearing else { return }
+    hearing = want
+    fading?.cancel()
+    if want {
+      if !engine.isRunning {
+        do {
+          try engine.start()
+          (air + hand + [swell]).forEach { $0.play() }
+          live = true
+        } catch {
+          live = false
+        }
+      }
+      droneLevel = 0
+      drone.volume = 0
+      startDrone()
+      engine.mainMixerNode.outputVolume = master
+      ease()
+    } else {
+      let from = engine.mainMixerNode.outputVolume
+      fading = Task { @MainActor [weak self] in
+        for i in 1...12 {
+          try? await Task.sleep(nanoseconds: 20_000_000)
+          guard let self, !Task.isCancelled else { return }
+          self.engine.mainMixerNode.outputVolume = from * (1 - Float(i) / 12)
+        }
+        guard let self, !Task.isCancelled, !self.hearing else { return }
+        (self.air + self.hand + [self.swell, self.drone]).forEach { $0.stop() }
+        self.engine.pause()
+      }
+    }
+  }
 
   /// The rising sound of the held question, picked up where the charge is.
   func swellStart(from charge: Double) {
-    guard live, enabled, let s = swellData else { return }
+    guard live, audible, let s = swellData else { return }
     swellFade?.cancel()
     let start = min(s.l.count - 1, Int(charge * Game.holdSeconds * Synth.rate))
     guard let buf = buffer((Array(s.l[start...]), Array(s.r[start...]))) else { return }
@@ -240,7 +299,7 @@ final class Sfx {
   private enum Room { case hand, air }
 
   private func later(_ delay: Double, _ body: @escaping @MainActor (Sfx) -> Void) {
-    guard live, enabled else { return }
+    guard live, audible else { return }
     if delay > 0 {
       Task { @MainActor [weak self] in
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -252,7 +311,7 @@ final class Sfx {
   }
 
   private func fire(_ buf: AVAudioPCMBuffer, on room: Room, gain: Float, pan: Float = 0) {
-    guard live, enabled else { return }
+    guard live, audible else { return }
     let node: AVAudioPlayerNode
     switch room {
     case .hand:
