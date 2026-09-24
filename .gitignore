@@ -1,0 +1,14 @@
+# secrets — the OpenAI key for "find the thread" lives here
+.env
+.env.*
+
+# everything build.sh and rebuild-shots.sh make
+build/
+.build/
+_original/Arcana.app/
+
+# the system's and editors' own
+.DS_Store
+.swiftpm/
+*.xcuserstate
+.claude/settings.local.json
