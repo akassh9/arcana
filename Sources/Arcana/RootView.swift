@@ -593,7 +593,7 @@ private struct Invocation: View {
       Caps(
         text: Moon.tonight.name, size: 8, tracking: 3.6,
         color: Palette.text.opacity(0.4))
-        .position(x: moon.x, y: moon.y + 32)
+        .position(x: moon.x, y: moon.y + Sky.moonRadius + 20)
         .chargeOpacity(game, quiet)
         .allowsHitTesting(false)
     }

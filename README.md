@@ -70,7 +70,7 @@ reading.
 | `Sources/Arcana/CardImages.swift` | faces rasterised once via `ImageRenderer`; a card being revealed is drawn live, stroke by stroke, then swapped for its raster. A card being returned is its raster fading off its pressed blank — the same grammar as the reverse: stock, pressed lines, one gold |
 | `Sources/Arcana/Chamber.swift` | the sky at first light: pale blue, lilac, rose, dawn and its rays, the engraved wheel, the daytime moon, and the near sky — gold dust and soft blooms that breathe, glints, the hold ring, blooms and ripples |
 | `Sources/Arcana/SkyRenderer.swift` | the near sky on the GPU: each frame a short list of soft shapes — discs, glows, rings, the charge's arc, the glints' crosses — drawn by one small Metal shader on a display link of its own; the shot tool gets the same frame as a still |
-| `Sources/Arcana/Moon.swift` | tonight's moon phase, reckoned from a known new moon |
+| `Sources/Arcana/Moon.swift` | tonight's moon phase, reckoned from a known new moon, and its face: the near side's seas, walled plains and rayed craters where they really lie, a day moon: pearl where the sun is on it, the seas a lilac veil of sky, the rest a ghost of the disc — painted once per phase, pixel by pixel |
 | `Sources/Arcana/Sfx.swift` | singing bowls, chimes, the swell, a drone that breathes with the sky, and the hand sounds — synthesised off the main thread at launch, played through two rooms |
 | `Assets/arcana-logo.png` | the compass/eclipse mark used for the macOS app icon |
 | `Sources/Arcana/Game.swift` | the beats — the held question, the draw, the writing, the recital, the return — plus all stage geometry |

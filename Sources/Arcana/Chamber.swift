@@ -44,6 +44,8 @@ enum Sky {
     CGPoint(x: size.width * 0.86, y: max(70, size.height * 0.12))
   }
 
+  static let moonRadius = 16.0
+
   static func wheelCenter(_ size: CGSize) -> CGPoint {
     CGPoint(x: size.width / 2, y: size.height * 0.42)
   }
@@ -264,26 +266,27 @@ private struct Rays: View {
   }
 }
 
-/// Tonight's moon, still up in the day sky: a pale disc, lit on the side
-/// the sun is on.
+/// Tonight's moon, still up in the day sky: pearl on the side the sun is
+/// on, the rest a ghost of the disc (Moon.swift).
 private struct MoonView: View {
   let center: CGPoint
+  @Environment(\.displayScale) private var scale
 
   var body: some View {
     let moon = Moon.tonight
-    let r = 12.5
-    Canvas { ctx, size in
-      let c = CGPoint(x: size.width / 2, y: size.height / 2)
-      ctx.fill(
-        Path(ellipseIn: CGRect(x: 0, y: 0, width: size.width, height: size.height)),
-        with: .radialGradient(
-          Gradient(colors: [.white.opacity(0.22 + 0.14 * moon.illumination), .white.opacity(0)]),
-          center: c, startRadius: r, endRadius: size.width / 2))
-      let disc = Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
-      ctx.fill(disc, with: .color(Color(red: 0.70, green: 0.73, blue: 0.88).opacity(0.5)))
-      let lit = moon.litPath(center: c, radius: r)
-      ctx.fill(lit, with: .color(.white))
-      ctx.stroke(lit, with: .color(Color(red: 0.58, green: 0.63, blue: 0.82).opacity(0.45)), lineWidth: 0.6)
+    let r = Sky.moonRadius
+    ZStack {
+      Canvas { ctx, size in
+        ctx.fill(
+          Path(ellipseIn: CGRect(x: 0, y: 0, width: size.width, height: size.height)),
+          with: .radialGradient(
+            Gradient(colors: [.white.opacity(0.22 + 0.14 * moon.illumination), .white.opacity(0)]),
+            center: CGPoint(x: size.width / 2, y: size.height / 2), startRadius: r,
+            endRadius: size.width / 2))
+      }
+      if let face = moon.face(radius: r, scale: scale) {
+        Image(decorative: face, scale: scale)
+      }
     }
     .frame(width: 96, height: 96)
     .position(center)
