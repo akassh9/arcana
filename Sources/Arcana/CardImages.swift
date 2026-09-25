@@ -308,6 +308,10 @@ final class CardImages {
   }
 
   func forgetBlanks() { blanks = [:] }
+
+  /// Once the cards are home, their faces are let go too; the next reading
+  /// makes its own as each card is taken, before it moves.
+  func forgetFaces() { faces = [:] }
 }
 
 // --- the flip, and the writing ---------------------------------------

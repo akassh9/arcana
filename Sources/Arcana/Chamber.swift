@@ -189,11 +189,11 @@ struct Chamber: View {
     // the cards — the ring, the wheel, the moon, the blooms — is moved by it
     let o = CGSize(width: insets.leading, height: insets.top)
     let span = max(full.width, full.height)
-    let charge = game.charge
 
-    // The broad fields of the sky are drawn once and left alone; they
-    // change only while the question is held. Everything that moves by
-    // itself lives in the near sky, one small canvas with its own clock.
+    // The broad fields of the sky are drawn once and left alone. While the
+    // question is held, three of them brighten, each through a small clock
+    // of its own that only fades it. Everything that moves by itself lives
+    // in the near sky, one small canvas with its own clock.
     ZStack {
       Palette.pearl
 
@@ -223,17 +223,17 @@ struct Chamber: View {
         ],
         center: UnitPoint(x: 0.5, y: 1.04), startRadius: 0, endRadius: span * 0.74
       )
-      .opacity(0.86 + 0.14 * charge)
+      .chargeOpacity(game) { 0.86 + 0.14 * $0 }
 
       Rays(origin: Sky.dawnPoint(full), span: span)
-        .opacity(0.8 + 0.2 * charge)
+        .chargeOpacity(game) { 0.8 + 0.2 * $0 }
 
       Sky.wheel
         .resizable()
         .interpolation(.medium)
         .frame(width: span * 1.32, height: span * 1.32)
         .position(Sky.wheelCenter(size) + o)
-        .opacity(0.055 + charge * 0.05)
+        .chargeOpacity(game) { 0.055 + $0 * 0.05 }
 
       MoonView(center: Sky.moonCenter(size) + o)
 
@@ -328,7 +328,7 @@ private struct NearSky: View {
   var body: some View {
     // quickens only for the ask: the sky never answers the return
     let lively =
-      (game.holding && game.phase == .invocation) || game.charge > 0.001 || game.skyQuick
+      (game.holding && game.phase == .invocation) || game.chargeMoving || game.skyQuick
     let asking = game.phase == .invocation
 
     TimelineView(
@@ -337,7 +337,7 @@ private struct NearSky: View {
     ) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
       let t = reduceMotion ? 0 : now
-      let charge = game.charge
+      let charge = game.chargeClock.value(at: now)
       // whole while asking, fading back in once the table is cleared; after
       // the cut it fades as the gathered light drains
       let ring =

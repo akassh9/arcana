@@ -57,7 +57,7 @@ MainActor.assumeIsolated {
   shoot("1-invocation") { _ in }
   shoot("2-holding") { g in
     g.holding = true
-    g.charge = 0.62
+    g.poseCharge(0.62)
   }
   shoot("3-draw") { g in
     g.phase = .draw
@@ -122,7 +122,7 @@ MainActor.assumeIsolated {
     g.quill.poseGiving(center: CGPoint(x: 630, y: 259))
     g.quill.peak = 0.70
     g.holding = true
-    g.charge = 0.70
+    g.poseCharge(0.70)
   }
   shoot("26-long") { g in g.quill.pose(longest) }
   shoot("22-epigraph") { g in

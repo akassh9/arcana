@@ -5,6 +5,20 @@ import SwiftUI
 //  card, the reading spoken back, and the cards returned.
 // ===================================================================
 
+/// The held question's charge, reckoned from the time: where it was, when,
+/// and how fast it is moving — rising while held, falling twice as fast when
+/// let go. It changes only as a hold begins, ends, completes or comes to
+/// rest, so nothing redraws because of it; the small clocks that show the
+/// charge read it for themselves.
+struct ChargeClock: Equatable {
+  var value = 0.0
+  var at: TimeInterval = 0
+  var rate = 0.0  // per second
+
+  func value(at t: TimeInterval) -> Double { clamp01(value + rate * (t - at)) }
+  var moving: Bool { rate != 0 }
+}
+
 /// How far one card's ink has sunk into the stock while the cards are
 /// returned, 0…1. Each card watches only its own, so a tick redraws only
 /// the card that is sinking.
@@ -43,7 +57,10 @@ final class Game {
   var recited = 0  // lines of the reading spoken so far
   var muted = false
   var holding = false
-  var charge = 0.0  // 0…1, how long the question has been held
+  private(set) var chargeClock = ChargeClock()
+  /// 0…1, how long the question has been held, now.
+  var charge: Double { chargeClock.value(at: now) }
+  var chargeMoving: Bool { chargeClock.moving }
   var weaving = false
   var weave: WeaveResult?
   var weaveError = false
@@ -114,6 +131,14 @@ final class Game {
 
   private var now: TimeInterval { Date().timeIntervalSinceReferenceDate }
 
+  /// The charge, from here on, moving at `rate` a second.
+  private func setCharge(_ value: Double, rate: Double) {
+    chargeClock = ChargeClock(value: value, at: now, rate: rate)
+  }
+
+  /// A still charge, for the shot tool.
+  func poseCharge(_ c: Double) { chargeClock = ChargeClock(value: c, at: now, rate: 0) }
+
   // --- the held question ---------------------------------------------
 
   func chooseSpread(_ i: Int) {
@@ -138,7 +163,9 @@ final class Game {
       holding = true
       holders = [holder]
       buzzedHalf = false
-      if !quick { Sfx.shared.swellStart(from: charge) }
+      let c = charge
+      setCharge(c, rate: 1 / (quick ? 0.8 : Game.holdSeconds))
+      if !quick { Sfx.shared.swellStart(from: c) }
       runCharge()
     } else if canReturn {
       holding = true
@@ -164,7 +191,11 @@ final class Game {
     }
     guard holding else { return }
     holding = false
-    if phase == .invocation && charge < 1 { Sfx.shared.swellStop() }
+    if phase == .invocation, chargeClock.rate > 0 {
+      let c = charge
+      if c < 1 { Sfx.shared.swellStop() }
+      setCharge(c, rate: -2 / (quick ? 0.8 : Game.holdSeconds))
+    }
   }
 
   private func runCharge() {
@@ -177,24 +208,29 @@ final class Game {
         let dt = min(0.05, t - last)
         last = t
         let full = self.quick ? 0.8 : Game.holdSeconds
+        // the charge is reckoned from the time; this loop only marks its
+        // turns — half way, the cut, and coming to rest
+        let c = self.charge
         if self.holding && self.phase == .invocation {
-          self.charge = min(1, self.charge + dt / full)
-          if !self.buzzedHalf && self.charge > 0.5 {
+          if !self.buzzedHalf && c > 0.5 {
             self.buzzedHalf = true
             Haptics.pulse()
           }
-          if self.charge >= 1 {
+          if c >= 1 {
             self.holding = false
             self.holders = []
             self.begin()
+            self.setCharge(1, rate: -2 / full)
           }
-        } else if self.charge > 0 {
-          // the sky reads the charge; never touch it when it has not moved
-          self.charge = max(0, self.charge - dt / (full * 0.5))
+        } else if self.chargeClock.rate > 0 {
+          // a hold that ended without being let go drains like one that was
+          self.setCharge(c, rate: -2 / full)
+        } else if self.chargeClock.rate < 0 && c <= 0 {
+          self.setCharge(0, rate: 0)
         }
         if self.phase == .invocation {
-          Sfx.shared.mood(0.42 + 0.5 * Float(self.charge))
-          self.quill.peak = self.charge > 0 ? max(self.quill.peak, self.charge) : 0
+          Sfx.shared.mood(0.42 + 0.5 * Float(c))
+          self.quill.peak = c > 0 ? max(self.quill.peak, c) : 0
         }
         if self.phase == .reading && self.returning && !self.turning {
           self.letting =
@@ -211,7 +247,7 @@ final class Game {
           }
         }
         let returnLive = self.returning && !self.turning
-        if !self.holding && self.charge <= 0 && !returnLive {
+        if !self.holding && !self.chargeMoving && !returnLive {
           self.chargeTask = nil
           return
         }
@@ -592,6 +628,7 @@ final class Game {
     homeward = false
     if phase == .invocation { inked = [] }
     CardImages.shared.forgetBlanks()
+    CardImages.shared.forgetFaces()
   }
 
   func toggleMute() {

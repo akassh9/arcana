@@ -302,9 +302,8 @@ private struct HoldRing: View {
     let r = layout.ringR
     ZStack {
       if game.phase == .invocation {
-        Caps(
-          text: "press and hold", size: 9, tracking: 4.2,
-          color: Palette.goldInk.opacity(0.75 * (1 - game.charge)))
+        Caps(text: "press and hold", size: 9, tracking: 4.2, color: Palette.goldInk.opacity(0.75))
+          .chargeOpacity(game) { 1 - $0 }
           .offset(y: r * 1.2 + 26)
           .transition(.opacity)
       }
@@ -553,9 +552,8 @@ private struct Invocation: View {
   let focus: FocusState<Bool>.Binding
 
   var body: some View {
-    let c = game.charge
     // the room goes quiet while the question is held; only the question stays
-    let quiet = 1 - 0.9 * c
+    let quiet: (Double) -> Double = { 1 - 0.9 * $0 }
     let ringTop = layout.deck.y - layout.ringR * 1.25 - 16
     let moon = Sky.moonCenter(layout.size)
 
@@ -563,12 +561,12 @@ private struct Invocation: View {
       VStack(spacing: 0) {
         // the words are part of the sky: pressing them presses the sky
         Rectangle().fill(Palette.goldInk.opacity(0.55)).frame(width: 46, height: 1)
-          .opacity(quiet)
+          .chargeOpacity(game, quiet)
           .allowsHitTesting(false)
 
-        Title(reduceMotion: reduceMotion, resting: !game.visible)
+        Title(reduceMotion: reduceMotion, resting: !game.visible || game.phase != .invocation)
           .padding(.top, 22)
-          .opacity(quiet)
+          .chargeOpacity(game, quiet)
           .allowsHitTesting(false)
 
         QuestionLine(game: game, layout: layout, reduceMotion: reduceMotion, focus: focus)
@@ -584,7 +582,7 @@ private struct Invocation: View {
           }
         }
         .padding(.top, 42)
-        .opacity(quiet)
+        .chargeOpacity(game, quiet)
       }
       .position(x: layout.size.width / 2, y: max(170, (40 + ringTop) / 2))
 
@@ -592,7 +590,7 @@ private struct Invocation: View {
         text: Moon.tonight.name, size: 8, tracking: 3.6,
         color: Palette.text.opacity(0.4))
         .position(x: moon.x, y: moon.y + 32)
-        .opacity(quiet)
+        .chargeOpacity(game, quiet)
         .allowsHitTesting(false)
     }
   }
@@ -611,14 +609,12 @@ private struct QuestionLine: View {
   let focus: FocusState<Bool>.Binding
 
   var body: some View {
-    let c = game.charge
     let q = game.quill
     let w = q.writing
 
     Text("Hold the question in your mind.")
       .font(.italic(19))
-      .foregroundStyle(Palette.text.opacity(0.62 + 0.36 * c))
-      .shadow(color: Palette.goldLit.opacity(0.9 * c), radius: 14)
+      .modifier(HeldInk(game: game))
       // the invitation breathes out as your first letter is laid
       .opacity(w ? 0 : 1)
       .blur(radius: w && !reduceMotion ? 4 : 0)
@@ -628,7 +624,7 @@ private struct QuestionLine: View {
           // handed its words, so that as it leaves it still shows them
           WrittenLine(
             text: q.text, marked: q.marked, born: q.born, wet: q.wet, spentAt: q.spentAt,
-            inkWidth: q.inkWidth, step: q.lastStep, charge: c, giving: q.giving,
+            inkWidth: q.inkWidth, step: q.lastStep, clock: game.chargeClock, giving: q.giving,
             reduceMotion: reduceMotion, resting: !game.visible
           )
           .transition(
@@ -663,28 +659,29 @@ private struct WrittenLine: View {
   /// How far this change moved the line: a letter glides it a few points,
   /// a paste a long way, and a long way takes a little longer.
   let step: CGFloat
-  let charge: Double
+  let clock: ChargeClock
   let giving: Int
   let reduceMotion: Bool
   let resting: Bool
 
   var body: some View {
-    let rest = 0.62 + 0.36 * charge
     let glide = min(0.6, 0.25 + Double(step) / 700)
+    // its clock runs while ink is cooling, or while the question is held
+    let ticking = (wet && !reduceMotion) || clock.moving
     Color.clear
       .frame(width: 0, height: 0)
       .overlay(alignment: .leading) {
-        TimelineView(
-          .animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !wet || resting)
-        ) { tl in
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: resting || !ticking)) { tl in
+          let now = tl.date.timeIntervalSinceReferenceDate
+          let charge = clock.value(at: now)
           InkLine(
-            text: text, marked: marked, born: born, now: tl.date.timeIntervalSinceReferenceDate,
-            dry: reduceMotion || !wet, rest: rest, charge: charge, giving: reduceMotion ? 0 : giving,
-            spentAt: spentAt)
+            text: text, marked: marked, born: born, now: now,
+            dry: reduceMotion || !wet, rest: 0.62 + 0.36 * charge, charge: charge,
+            giving: reduceMotion ? 0 : giving, spentAt: spentAt)
+            .shadow(color: Palette.goldLit.opacity(0.9 * charge), radius: 14)
+            // with Reduce Motion the question is given as a whole
+            .opacity(reduceMotion ? 1 - ramp(charge, 0.35, 0.9) : 1)
         }
-        .shadow(color: Palette.goldLit.opacity(0.9 * charge), radius: 14)
-        // with Reduce Motion the question is given as a whole
-        .opacity(reduceMotion ? 1 - ramp(charge, 0.35, 0.9) : 1)
         // only the centring glides; the ink itself never animates
         .animation(reduceMotion ? nil : .easeOut(duration: glide)) { $0.offset(x: -inkWidth / 2) }
       }
@@ -762,6 +759,45 @@ struct InkLine: View {
             .opacity(spent)
         }
       }
+  }
+}
+
+// ===================================================================
+//  The charge on screen. Each thing that answers the held question keeps
+//  a small clock of its own, running only while the charge moves, and
+//  reads the charge from the time. What it wraps is never re-evaluated.
+// ===================================================================
+
+/// Fades a view by the charge.
+struct ChargeOpacity: ViewModifier {
+  let game: Game
+  let f: (Double) -> Double
+
+  func body(content: Content) -> some View {
+    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !game.chargeMoving)) { tl in
+      content.opacity(f(game.chargeClock.value(at: tl.date.timeIntervalSinceReferenceDate)))
+    }
+  }
+}
+
+extension View {
+  func chargeOpacity(_ game: Game, _ f: @escaping (Double) -> Double) -> some View {
+    modifier(ChargeOpacity(game: game, f: f))
+  }
+}
+
+/// The invitation's ink, which darkens and gathers a little light while the
+/// question is held.
+private struct HeldInk: ViewModifier {
+  let game: Game
+
+  func body(content: Content) -> some View {
+    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !game.chargeMoving)) { tl in
+      let c = game.chargeClock.value(at: tl.date.timeIntervalSinceReferenceDate)
+      content
+        .foregroundStyle(Palette.text.opacity(0.62 + 0.36 * c))
+        .shadow(color: Palette.goldLit.opacity(0.9 * c), radius: 14)
+    }
   }
 }
 

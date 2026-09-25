@@ -36,12 +36,12 @@ final class Sfx {
   private var airCursor = 0
   private var handCursor = 0
 
+  // every sound is kept once, as the buffer that plays it
   private var cues: [Cue: AVAudioPCMBuffer] = [:]
-  private var tones: [Int: Synth.Stereo] = [:]  // midi * 2 + (dark ? 1 : 0)
-  private var toneBuffers: [Int: AVAudioPCMBuffer] = [:]
+  private var toneBuffers: [Int: AVAudioPCMBuffer] = [:]  // midi * 2 + (dark ? 1 : 0)
   private var chimes: [AVAudioPCMBuffer] = []
-  private var droneData: Synth.Stereo?
-  private var swellData: Synth.Stereo?
+  private var droneBuffer: AVAudioPCMBuffer?
+  private var swellBuffer: AVAudioPCMBuffer?
 
   private var lastChime: TimeInterval = 0
   private var droneLevel: Float = 0
@@ -130,24 +130,24 @@ final class Sfx {
     drone d: Synth.Stereo, swell s: Synth.Stereo, chimes c: [Synth.Stereo],
     tones t: [Int: Synth.Stereo]
   ) {
-    droneData = d
-    swellData = s
+    droneBuffer = buffer(d)
+    swellBuffer = buffer(s)
     chimes = c.compactMap { buffer($0) }
-    tones = t
     for (k, v) in t { toneBuffers[k] = buffer(v) }
     startDrone()
   }
 
-  /// Start the loop at the point in its breath that matches the sky's.
+  /// Start the loop at the point in its breath that matches the sky's: the
+  /// rest of this pass from there, then the whole loop, seamlessly, forever.
+  /// The first part is a short-lived copy, let go once it has played.
   private func startDrone() {
-    guard live, let d = droneData else { return }
+    guard live, let buf = droneBuffer else { return }
     let phase = Date().timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 10)
-    let offset = Int(phase * Synth.rate) % d.l.count
-    let rotated: Synth.Stereo = (
-      Array(d.l[offset...] + d.l[..<offset]), Array(d.r[offset...] + d.r[..<offset])
-    )
-    guard let buf = buffer(rotated) else { return }
+    let offset = Int(phase * Synth.rate) % Int(buf.frameLength)
     drone.stop()
+    if offset > 0, let rest = tail(of: buf, from: offset) {
+      drone.scheduleBuffer(rest, at: nil, options: [])
+    }
     drone.scheduleBuffer(buf, at: nil, options: .loops)
     drone.play()
   }
@@ -180,19 +180,24 @@ final class Sfx {
 
   /// Every card of the spread at once — the reading as a single chord.
   func chord(_ notes: [(Int, Bool)], gain: Float) {
-    let parts = notes.compactMap { tones[$0.0 * 2 + ($0.1 ? 1 : 0)] }
+    guard live, audible else { return }
+    let parts = notes.compactMap { toneBuffers[$0.0 * 2 + ($0.1 ? 1 : 0)] }
     guard !parts.isEmpty else { return }
-    let n = parts.map { $0.l.count }.max() ?? 0
-    var l = [Float](repeating: 0, count: n)
-    var r = [Float](repeating: 0, count: n)
+    let n = parts.map { Int($0.frameLength) }.max() ?? 0
+    guard n > 0, let buf = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: AVAudioFrameCount(n)),
+      let out = buf.floatChannelData
+    else { return }
+    buf.frameLength = AVAudioFrameCount(n)
+    out[0].update(repeating: 0, count: n)
+    out[1].update(repeating: 0, count: n)
     let k = 1 / Float(parts.count).squareRoot()
     for p in parts {
-      for i in 0..<p.l.count {
-        l[i] += p.l[i] * k
-        r[i] += p.r[i] * k
+      guard let ch = p.floatChannelData else { continue }
+      for i in 0..<Int(p.frameLength) {
+        out[0][i] += ch[0][i] * k
+        out[1][i] += ch[1][i] * k
       }
     }
-    guard let buf = buffer((l, r)) else { return }
     fire(buf, on: .air, gain: gain)
   }
 
@@ -271,13 +276,13 @@ final class Sfx {
 
   /// The rising sound of the held question, picked up where the charge is.
   func swellStart(from charge: Double) {
-    guard live, audible, let s = swellData else { return }
+    guard live, audible, let buf = swellBuffer else { return }
     swellFade?.cancel()
-    let start = min(s.l.count - 1, Int(charge * Game.holdSeconds * Synth.rate))
-    guard let buf = buffer((Array(s.l[start...]), Array(s.r[start...]))) else { return }
+    let start = min(Int(buf.frameLength) - 1, Int(charge * Game.holdSeconds * Synth.rate))
+    guard let rest = tail(of: buf, from: start) else { return }
     swell.stop()
     swell.volume = 0.55
-    swell.scheduleBuffer(buf, at: nil, options: .interrupts)
+    swell.scheduleBuffer(rest, at: nil, options: .interrupts)
     swell.play()
   }
 
@@ -324,6 +329,19 @@ final class Sfx {
     node.volume = min(1, max(0, gain))
     node.pan = pan
     node.scheduleBuffer(buf, at: nil, options: .interrupts, completionHandler: nil)
+  }
+
+  /// The end of a buffer, from `start`, as a buffer of its own.
+  private func tail(of buf: AVAudioPCMBuffer, from start: Int) -> AVAudioPCMBuffer? {
+    let n = Int(buf.frameLength) - start
+    guard n > 0, let src = buf.floatChannelData,
+      let out = AVAudioPCMBuffer(pcmFormat: fmt, frameCapacity: AVAudioFrameCount(n)),
+      let dst = out.floatChannelData
+    else { return nil }
+    out.frameLength = AVAudioFrameCount(n)
+    dst[0].update(from: src[0] + start, count: n)
+    dst[1].update(from: src[1] + start, count: n)
+    return out
   }
 
   private func buffer(_ s: Synth.Stereo) -> AVAudioPCMBuffer? {
