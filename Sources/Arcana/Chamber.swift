@@ -58,13 +58,18 @@ enum Sky {
   /// The celestial wheel — twelve houses, a star of eight, drawn by the
   /// same unsteady pen as the cards, in the brown-gold of old engraving.
   static let wheel: Image = {
+    guard let cg = wheelImage else { return Image(systemName: "circle") }
+    return Image(nsImage: NSImage(cgImage: cg, size: NSSize(width: cg.width, height: cg.height)))
+  }()
+
+  static let wheelImage: CGImage? = {
     let n = 1500
     guard
       let ctx = CGContext(
         data: nil, width: n, height: n, bitsPerComponent: 8, bytesPerRow: n * 4,
         space: CGColorSpaceCreateDeviceRGB(),
         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
-    else { return Image(systemName: "circle") }
+    else { return nil }
     ctx.translateBy(x: 0, y: CGFloat(n))
     ctx.scaleBy(x: 1, y: -1)
     ctx.setLineCap(.round)
@@ -81,8 +86,7 @@ enum Sky {
         ctx.strokePath()
       }
     }
-    guard let cg = ctx.makeImage() else { return Image(systemName: "circle") }
-    return Image(nsImage: NSImage(cgImage: cg, size: NSSize(width: n, height: n)))
+    return ctx.makeImage()
   }()
 }
 
@@ -168,11 +172,14 @@ struct Chamber: View {
     // the cards — the ring, the wheel, the moon, the blooms — is moved by it
     let o = CGSize(width: insets.leading, height: insets.top)
     let span = max(full.width, full.height)
+    let moon = Sky.moonCenter(size) + o
 
     // The broad fields of the sky are drawn once and left alone. While the
     // question is held, three of them brighten, each through a small clock
-    // of its own that only fades it. Everything that moves by itself lives
-    // in the near sky, drawn on the GPU on a clock of its own.
+    // of its own that only fades it. When one of the sky's own cards is
+    // drawn, what answers it is laid over them, or turned, by Core
+    // Animation (Answers.swift). Everything that moves by itself lives in
+    // the near sky, drawn on the GPU on a clock of its own.
     ZStack {
       Palette.pearl
 
@@ -207,14 +214,14 @@ struct Chamber: View {
       Rays(origin: Sky.dawnPoint(full), span: span)
         .chargeOpacity(game) { 0.8 + 0.2 * $0 }
 
-      Sky.wheel
-        .resizable()
-        .interpolation(.medium)
-        .frame(width: span * 1.32, height: span * 1.32)
+      // the Moon's lights and the Sun's, laid over the sky when they are drawn
+      SkyAnswers(game: game, lights: Lights(full: full, moon: moon))
+
+      Wheel(game: game, side: span * 1.32, reduceMotion: reduceMotion)
         .position(Sky.wheelCenter(size) + o)
         .chargeOpacity(game) { 0.055 + $0 * 0.05 }
 
-      MoonView(center: Sky.moonCenter(size) + o)
+      MoonView(center: moon)
 
       NearSky(
         game: game, pointer: pointer, origin: o, focus: layout.deck + o, ringR: layout.ringR,
@@ -234,6 +241,73 @@ struct Chamber: View {
 
 extension CGPoint {
   static func + (p: CGPoint, o: CGSize) -> CGPoint { CGPoint(x: p.x + o.width, y: p.y + o.height) }
+}
+
+/// The engraved wheel. Live, it is a layer of its own, so that when the
+/// Wheel is drawn Core Animation turns it (Answers.swift). The shot tool,
+/// which cannot see such a layer, draws it in SwiftUI — pixel for pixel the
+/// same.
+private struct Wheel: View {
+  let game: Game
+  let side: CGFloat
+  let reduceMotion: Bool
+  @Environment(\.stillSky) private var still
+
+  var body: some View {
+    if let image = Sky.wheelImage, !still {
+      let a = game.answers.first { $0.kind == .wheel }
+      WheelTurn(image: image, answer: a, sunk: a.map { game.sunk($0) } ?? 0, still: reduceMotion)
+        .frame(width: side, height: side)
+    } else {
+      Sky.wheel
+        .resizable()
+        .interpolation(.medium)
+        .frame(width: side, height: side)
+        .rotationEffect(.degrees(Heavens.turn(game, Date().timeIntervalSinceReferenceDate)))
+    }
+  }
+}
+
+/// The lights the Moon and the Sun are answered with. Live they are layers
+/// of Core Animation's; the shot tool draws the same glows in SwiftUI, at
+/// the strength they have now.
+private struct SkyAnswers: View {
+  let game: Game
+  let lights: Lights
+  @Environment(\.stillSky) private var still
+
+  var body: some View {
+    if still {
+      let t = Date().timeIntervalSinceReferenceDate
+      ZStack {
+        ForEach(Light.allCases, id: \.self) { l in
+          let a = Heavens.light(l, game, t)
+          if a > 0.001 {
+            if let g = lights.glow(l) {
+              RadialGradient(
+                stops: g.stops.map { .init(color: $0.color, location: $0.at) },
+                center: UnitPoint(
+                  x: g.center.x / lights.full.width, y: g.center.y / lights.full.height),
+                startRadius: 0, endRadius: g.radius
+              )
+              .opacity(a)
+            } else if l == .glare {
+              Color.white.opacity(a)
+            } else if let image = lights.rays() {
+              Image(decorative: image, scale: 0.5).resizable().opacity(a)
+            }
+          }
+        }
+      }
+      .frame(width: lights.full.width, height: lights.full.height)
+    } else {
+      SkyLights(
+        lights: lights, answers: game.answers, sunk: game.answers.map { game.sunk($0) },
+        quick: game.quick
+      )
+      .frame(width: lights.full.width, height: lights.full.height)
+    }
+  }
 }
 
 /// A few soft shafts of light fanning up from below the table. Drawn once.
@@ -312,6 +386,8 @@ private struct NearSky: View {
     // quickens only for the ask: the sky never answers the return
     let lively =
       (game.holding && game.phase == .invocation) || game.chargeMoving || game.skyQuick
+    // a still sky (Reduce Motion) is drawn again as a star comes out or is given back
+    let _ = reduceMotion ? (game.stirring.contains(.star), game.answers.map(game.sunk)) : (false, [])
 
     if still {
       GeometryReader { geo in
@@ -345,7 +421,9 @@ private struct NearSky: View {
 
     var p = SkyPaint()
     paintBlooms(&p, size: size, t: t, tilt: tilt, breath: breath)
-    paintGlints(&p, size: size, t: t, charge: charge, tilt: tilt)
+    paintGlints(
+      &p, size: size, t: t, charge: charge, tilt: tilt, breath: breath,
+      star: game.answer(.star, at: now))
     if ring > 0.002 { paintRing(&p, charge: charge, breath: breath, shown: ring) }
     paintMotes(&p, size: size, t: t, charge: charge, breath: breath)
     paintGiven(&p, points: given, of: game.quill.giving, charge: charge, peak: game.quill.peak)
@@ -368,16 +446,33 @@ private struct NearSky: View {
     }
   }
 
+  /// Each glint catches the light for a moment and lets it go: four fine
+  /// arms of light that thin to nothing, the upright one longest. When the
+  /// Star is drawn, stars come out where they are, and stay.
   private func paintGlints(
-    _ p: inout SkyPaint, size: CGSize, t: Double, charge: Double, tilt: CGPoint
+    _ p: inout SkyPaint, size: CGSize, t: Double, charge: Double, tilt: CGPoint,
+    breath: Double, star: Answer.State?
   ) {
-    for g in glints {
+    for (k, g) in glints.enumerated() {
+      let held = star.map { Heavens.star(k, of: glints.count, $0) } ?? 0
       let tw = max(0, sin(t * g.rate + g.phase))
-      let a = pow(tw, 6) * (0.8 + charge * 0.2)
-      guard a > 0.01 else { continue }
+      // a glint's moment of light, as ever — unless a star is out there
+      let a = pow(tw, 6) * (0.8 + charge * 0.2) * (1 - held)
+      guard a > 0.01 || held > 0.004 else { continue }
       let c = CGPoint(x: g.x * size.width - tilt.x * 16, y: g.y * size.height - tilt.y * 11)
-      p.cross(c, g.size * (0.6 + 0.4 * tw), width: 0.8, Tone.goldInk.opacity(a * 0.55))
-      p.glow(c, 5, Tone.goldLit.opacity(a * 0.7), Tone.goldLit.opacity(0))
+      if a > 0.01 {
+        p.spikes(c, 1.6 * g.size * (0.6 + 0.4 * tw), width: 1, Tone.goldInk.opacity(a * 0.55))
+        p.glow(c, 5, Tone.goldLit.opacity(a * 0.7), Tone.goldLit.opacity(0))
+      }
+      if held > 0.004 {
+        // a star: the same light, held, in a soft light of its own, with a
+        // pearl heart; it breathes with the room
+        p.glow(c, 14, Tone.white.opacity(0.5 * held), Tone.white.opacity(0))
+        p.spikes(
+          c, 2.2 * g.size * (0.94 + 0.06 * breath), width: 1.1, Tone.goldInk.opacity(0.5 * held))
+        p.glow(c, 4, Tone.goldLit.opacity(0.8 * held), Tone.goldLit.opacity(0))
+        p.disc(c, 0.9, Tone.white.opacity(0.9 * held))
+      }
     }
   }
 

@@ -7,10 +7,15 @@ import SwiftUI
 _ = NSApplication.shared
 
 let outDir = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "."
+/// Only the shots whose names begin with one of these, if any are given.
+let only = Array(CommandLine.arguments.dropFirst(2))
+/// Pixels to the point for the posed stages: 1, or ARCANA_SHOT_SCALE=2 to judge fine detail.
+let stageScale = CGFloat(Double(ProcessInfo.processInfo.environment["ARCANA_SHOT_SCALE"] ?? "") ?? 1)
 let stage = CGSize(width: 1260, height: 860)
 
 MainActor.assumeIsolated {
   @MainActor func save<V: View>(_ name: String, _ view: V, scale: CGFloat = 1) {
+    guard only.isEmpty || only.contains(where: { name.hasPrefix($0) }) else { return }
     let renderer = ImageRenderer(content: view)
     renderer.scale = scale
     guard let ns = renderer.nsImage,
@@ -31,7 +36,8 @@ MainActor.assumeIsolated {
     // an ImageRenderer cannot see the near sky's Metal layer; it is drawn as a still
     save(
       name,
-      RootView(game: g).frame(width: size.width, height: size.height).environment(\.stillSky, true))
+      RootView(game: g).frame(width: size.width, height: size.height).environment(\.stillSky, true),
+      scale: stageScale)
   }
 
   let long = Date().timeIntervalSinceReferenceDate - 60
@@ -167,6 +173,71 @@ MainActor.assumeIsolated {
   }
   shoot("11-five-small", size: CGSize(width: 940, height: 660)) { g in
     read(g, spread: 2, picks: [1, 5, 8, 13, 19])
+  }
+
+  // as above: the sky answering the four cards that are already in it
+  /// Lays these cards, in order and orientation, as a spoken spread.
+  @MainActor func lay(_ g: Game, spread: Int, _ cards: [(String, Bool)]) {
+    var order = g.order
+    for (k, c) in cards.enumerated() {
+      guard let j = order.firstIndex(where: { $0.card.id == c.0 }) else { continue }
+      order.swapAt(k, j)
+      order[k] = Draw(card: order[k].card, reversed: c.1)
+    }
+    g.order = order
+    read(g, spread: spread, picks: Array(0..<cards.count))
+    g.sounded = true
+  }
+  /// …answered long ago, or `age` seconds ago.
+  @MainActor func answered(_ g: Game, spread: Int, _ cards: [(String, Bool)], age: Double = 60) {
+    lay(g, spread: spread, cards)
+    g.poseAnswers(from: Date().timeIntervalSinceReferenceDate - age)
+  }
+  /// …and being given back, held to `L`.
+  @MainActor func givenBack(_ g: Game, at L: Double) {
+    g.returning = true
+    g.letting = L
+    g.sinks = Dictionary(uniqueKeysWithValues: g.picks.map { ($0, Sink()) })
+    g.settleReturn(sounding: false)
+  }
+  shoot("31-wheel") { g in answered(g, spread: 1, [("tower", false), ("wheel", false), ("hermit", false)]) }
+  shoot("32-wheel-reversed") { g in
+    answered(g, spread: 1, [("tower", false), ("wheel", true), ("hermit", false)], age: 7)
+  }
+  shoot("33-star") { g in answered(g, spread: 1, [("empress", false), ("star", false), ("chariot", false)]) }
+  // one star at the height of its coming out: the third, 16 s in
+  shoot("34-star-reversed") { g in
+    answered(g, spread: 1, [("empress", false), ("star", true), ("chariot", false)], age: 16.1)
+  }
+  shoot("35-moon") { g in answered(g, spread: 1, [("lovers", false), ("moon", false), ("justice", false)]) }
+  // the same reading, before the sky has answered
+  shoot("35a-moon-before") { g in lay(g, spread: 1, [("lovers", false), ("moon", false), ("justice", false)]) }
+  shoot("36-moon-reversed") { g in
+    answered(g, spread: 1, [("lovers", false), ("moon", true), ("justice", false)])
+  }
+  shoot("37-sun") { g in answered(g, spread: 1, [("magician", false), ("sun", false), ("world", false)]) }
+  shoot("38-sun-reversed") { g in
+    answered(g, spread: 1, [("magician", false), ("sun", true), ("world", false)])
+  }
+  shoot("39-heavens") { g in
+    answered(
+      g, spread: 2, [("star", false), ("moon", false), ("wheel", false), ("sun", false), ("fool", false)])
+  }
+  shoot("40-altar-moon") { g in
+    answered(g, spread: 1, [("lovers", false), ("moon", false), ("justice", false)])
+    g.inspecting = 1
+    g.openedAt = long
+  }
+  shoot("41-returning-star") { g in
+    answered(g, spread: 1, [("empress", false), ("star", false), ("chariot", false)])
+    givenBack(g, at: 0.55)
+  }
+  shoot("42-one-moon") { g in answered(g, spread: 0, [("moon", false)]) }
+  shoot("43-altar-asked") { g in
+    answered(g, spread: 1, [("empress", false), ("star", false), ("chariot", false)])
+    g.quill.poseAsked(asked, at: long)
+    g.inspecting = 1
+    g.openedAt = long
   }
   shoot("12-invocation-small", size: CGSize(width: 940, height: 660)) { _ in }
 

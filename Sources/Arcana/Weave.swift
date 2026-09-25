@@ -23,6 +23,10 @@ final class WeaveService {
 
   private let endpoint = URL(string: "https://api.openai.com/v1/responses")!
 
+  /// There is a key to ask with. Without one the thread is not offered at
+  /// all, rather than offered and always quiet.
+  static var ready: Bool { APIKeyStore.value() != nil }
+
   // The reader's written question is never part of this request.
   func make(spread: Spread, draws: [Draw]) async throws -> WeaveResult {
     guard let key = APIKeyStore.value() else { throw Failure.missingKey }

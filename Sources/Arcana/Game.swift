@@ -86,6 +86,16 @@ final class Game {
   var homeward = false  // the cards have turned over; what is left on the table goes
   var roomLive = true  // the invocation can be touched; off until it has come back
 
+  // as above — what the sky is answering (Answers.swift)
+  var answers: [Answer] = []
+  /// The answers still coming or being let go. Core Animation carries
+  /// them; only a still sky (Reduce Motion) needs telling when to look again.
+  private(set) var stirring: Set<Answer.Kind> = []
+  private var stirredUntil: [Answer.Kind: TimeInterval] = [:]
+
+  /// The thread is offered only when there is a key to find it with.
+  private(set) var threadable = WeaveService.ready
+
   /// The window can be seen and the screens are awake. When it can't, every
   /// clock rests and the room falls silent; all of it is reckoned from the
   /// time, so it resumes in step.
@@ -359,6 +369,8 @@ final class Game {
     returning = false
     turning = false
     homeward = false
+    answers = []
+    threadable = WeaveService.ready
     phase = .draw
     // the deck has taken the question; the line is empty
     quill.give()
@@ -410,6 +422,7 @@ final class Game {
       } else {
         withAnimation(.easeInOut(duration: Game.inkSeconds)) { _ = inked.insert(i) }
       }
+      answerLater(d, card: i, round: round)
       guard complete else { return }
       try? await Task.sleep(nanoseconds: UInt64(((quick ? 0.2 : Game.inkSeconds) + 0.35) * 1e9))
       guard self.round == round, phase == .draw else { return }
@@ -497,6 +510,43 @@ final class Game {
     }
   }
 
+  // --- as above -------------------------------------------------------
+
+  /// A card has landed face up and is writing itself. If it is one of the
+  /// four already in the sky, the sky answers it once it is written.
+  private func answerLater(_ d: Draw, card i: Int, round: Int) {
+    guard Answer(d, card: i, from: 0) != nil else { return }
+    let wait = quick ? 0.2 : Game.inkSeconds
+    Task { @MainActor [weak self] in
+      try? await Task.sleep(nanoseconds: UInt64(wait * 1e9))
+      guard let self, self.round == round, self.phase != .invocation,
+        let a = Answer(d, card: i, from: self.now)
+      else { return }
+      self.answers.append(a)
+      self.stir(a.kind, for: a.length(quick: self.quick))
+    }
+  }
+
+  /// Mark one answer as moving for a while; it comes to rest by itself.
+  private func stir(_ kind: Answer.Kind, for seconds: Double) {
+    stirredUntil[kind] = max(stirredUntil[kind] ?? 0, now + seconds)
+    if !stirring.contains(kind) { stirring.insert(kind) }
+    Task { @MainActor [weak self] in
+      try? await Task.sleep(nanoseconds: UInt64((seconds + 0.05) * 1e9))
+      guard let self, self.now >= self.stirredUntil[kind] ?? 0 else { return }
+      self.stirring.remove(kind)
+    }
+  }
+
+  /// The sky's answers to the cards on the table, posed as begun at `t`:
+  /// long ago for the shot tool's stills, or just now.
+  func poseAnswers(from t: TimeInterval) {
+    answers = picks.compactMap { Answer(order[$0], card: $0, from: t) }
+    for a in answers where a.from + a.length(quick: quick) > now {
+      stir(a.kind, for: a.from + a.length(quick: quick) - now)
+    }
+  }
+
   private func pan(_ slot: Int) -> Float {
     need <= 1 ? 0 : Float(Double(slot) / Double(need - 1) * 2 - 1) * 0.55
   }
@@ -519,7 +569,9 @@ final class Game {
   }
 
   func findThread() {
-    guard phase == .reading, complete, !weaving, !returning, weave == nil else { return }
+    guard threadable, phase == .reading, complete, !weaving, !returning, weave == nil else {
+      return
+    }
 
     weaving = true
     threadLive = true
@@ -575,6 +627,12 @@ final class Game {
     weaveTask = nil
     Sfx.shared.play(.slide, gain: 0.35)
     Sfx.shared.mood(0.42)
+    // whatever the sky was answering goes with the table
+    let t = now
+    for k in answers.indices where answers[k].until == .infinity {
+      answers[k].until = t
+      stir(answers[k].kind, for: Answer.fade)
+    }
     withAnimation(.easeInOut(duration: 0.6)) { clearTable() }
     ringFrom = now + 0.3
     let round = self.round
@@ -623,6 +681,10 @@ final class Game {
   }
 
   private func forgetReturn() {
+    // each answer went with its card's ink, or with the table; the sky is its own again
+    answers = []
+    stirredUntil = [:]
+    stirring = []
     sinks = [:]
     hush = 0
     homeward = false

@@ -845,6 +845,9 @@ private struct Epigraph: View {
               removal: .opacity.animation(.easeOut(duration: 0.7))))
       }
     }
+    // while a card is on the altar, the question stays only faintly above it
+    .opacity(game.inspecting == nil ? 1 : 0.4)
+    .animation(.easeOut(duration: 0.4), value: game.inspecting == nil)
     .allowsHitTesting(false)
   }
 }
@@ -1125,7 +1128,7 @@ private struct ThreadPanel: View {
               settling
             } else if game.weaveError {
               quietFailure
-            } else {
+            } else if game.threadable {
               invitation
             }
           }
@@ -1263,7 +1266,18 @@ private struct Inspector: View {
       let b = reduceMotion ? 0.5 : Sky.breath(now)
 
       ZStack {
-        Palette.pearl.opacity(0.84).ignoresSafeArea()
+        // a veil over the table, so the altar is a place of its own; thin
+        // enough toward the edges that the sky, and whatever it is
+        // answering, still shows through
+        RadialGradient(
+          stops: [
+            .init(color: Palette.pearl.opacity(0.82), location: 0),
+            .init(color: Palette.pearl.opacity(0.62), location: 0.5),
+            .init(color: Palette.pearl.opacity(0.36), location: 1),
+          ],
+          center: .center, startRadius: 0, endRadius: max(size.width, size.height) * 0.72
+        )
+        .ignoresSafeArea()
 
         HStack(spacing: min(72, size.width * 0.055)) {
           ZStack {

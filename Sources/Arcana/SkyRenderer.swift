@@ -7,7 +7,7 @@ import SwiftUI
 //  The near sky, drawn on the GPU at the display's own pace.
 //
 //  Everything that drifts in the light is a short list of soft shapes —
-//  discs, glows, rings, an arc, crosses — reckoned from the time for each
+//  discs, glows, rings, an arc, glints — reckoned from the time for each
 //  frame and handed to one small shader. SwiftUI is never asked to redraw
 //  the sky, so the dust can move as smoothly as the display allows.
 // ===================================================================
@@ -44,7 +44,7 @@ struct Tone {
 
 /// One soft shape, laid out as the shader reads it.
 struct Sprite {
-  enum Kind: Float { case disc = 0, glow, ring, arc, cross }
+  enum Kind: Float { case disc = 0, glow, ring, arc, spikes }
 
   var geo: SIMD4<Float>  // centre x, y; radius; line width — in points
   var c0: SIMD4<Float>  // colours, premultiplied
@@ -87,9 +87,10 @@ struct SkyPaint {
     add(.arc, p, r, width, reach: r + width / 2 + 1, c, c, c, a, sweep)
   }
 
-  /// A small cross, each arm `l` long from the centre.
-  mutating func cross(_ p: CGPoint, _ l: Double, width: Double, _ c: Tone) {
-    add(.cross, p, l, width, reach: l + width + 1, c, c, c)
+  /// A glint: an upright arm `l` long each way, thinning from `width` at
+  /// the heart to nothing and fading as it goes, and level arms `level` as long.
+  mutating func spikes(_ p: CGPoint, _ l: Double, width: Double, level: Double = 0.62, _ c: Tone) {
+    add(.spikes, p, l, width, reach: l + width + 1, c, c, c, level)
   }
 
   /// With no middle colour, the middle stop is halfway between the two.
@@ -150,6 +151,14 @@ private let skyShader = """
   // how much of a pixel lies inside an edge, d from it (inside < 0)
   static float inside(float d, float px) { return saturate(0.5 - d / px); }
 
+  // one arm of a glint, `along` its length from the heart and `across` it:
+  // as wide as w at the heart, thinning to nothing at len, and fading
+  static float arm(float along, float across, float len, float w, float px) {
+    if (len <= 0 || along >= len) return 0;
+    float t = along / len;
+    return band(across, w * (1 - t), px) * (1 - t) * (1 - t);
+  }
+
   fragment float4 skyFragment(Out in [[stage_in]],
                               const device Sprite *sprites [[buffer(0)]],
                               constant Frame &f [[buffer(1)]]) {
@@ -186,9 +195,9 @@ private let skyShader = """
       break;
     }
     case 4: {
+      // arms of light that thin to nothing: upright, and level
       float2 q = abs(p);
-      k = max(band(q.y, w, f.px) * inside(q.x - r, f.px),
-              band(q.x, w, f.px) * inside(q.y - r, f.px));
+      k = max(arm(q.y, q.x, r, w, f.px), arm(q.x, q.y, r * s.shape.z, w, f.px));
       break;
     }
     }

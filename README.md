@@ -21,6 +21,17 @@ spoken back as verse, one line per card, and the whole spread sounds as one
 chord. When it is over you hold once more, and the cards are returned: the ink
 sinks into the stock, the gold stays, and they go home to the deck.
 
+Four of the cards are already in the sky — the Wheel, the Star, the Moon and
+the Sun — and when one of them is drawn, the sky answers it once the card has
+written itself. The engraved wheel turns a house. The stars come out in the
+day sky, one by one. Tonight's moon lets its half-light out over the room, as
+far as it is really lit: at the full, the whole room; at the new moon, almost
+nothing. First light rises into morning, and the rays reach further. Reversed,
+each answers the way its line reads: the wheel turns and comes back, one star
+at a time comes out and goes in again, the lilac clears off the sky, the light
+comes up white. An answer stays while its card lies on the table, and goes
+with the card's ink when the cards are returned.
+
 ## Playing
 
 | | |
@@ -41,9 +52,12 @@ diamond appears under the title, and the card's bowl sounds an octave lower in
 a darker voice.
 
 With Reduce Motion on, the hold is short, cards appear already written, and the
-sky is still.
+sky is still. It still answers its cards, in a moment and by fading; the wheel
+does not turn, the turned wheel fades in over it.
 
-When a spread is complete, **find the thread** is an optional closing ritual.
+When a spread is complete, **find the thread** is an optional closing ritual,
+offered only when Arcana has a key to find it with (below); without one, the
+reading ends on the verse.
 It returns one finished folio with two short sentences and one question to carry
 away, set in the air where the verse was. When the cards are returned, its
 question stays over the blank cards until they turn. It never streams or opens a
@@ -69,7 +83,8 @@ reading.
 | `Sources/Arcana/Deck.swift` | the deck. One line per card, per orientation; one note per position |
 | `Sources/Arcana/CardImages.swift` | faces rasterised once via `ImageRenderer`; a card being revealed is drawn live, stroke by stroke, then swapped for its raster. A card being returned is its raster fading off its pressed blank — the same grammar as the reverse: stock, pressed lines, one gold |
 | `Sources/Arcana/Chamber.swift` | the sky at first light: pale blue, lilac, rose, dawn and its rays, the engraved wheel, the daytime moon, and the near sky — gold dust and soft blooms that breathe, glints, the hold ring, blooms and ripples |
-| `Sources/Arcana/SkyRenderer.swift` | the near sky on the GPU: each frame a short list of soft shapes — discs, glows, rings, the charge's arc, the glints' crosses — drawn by one small Metal shader on a display link of its own; the shot tool gets the same frame as a still |
+| `Sources/Arcana/SkyRenderer.swift` | the near sky on the GPU: each frame a short list of soft shapes — discs, glows, rings, the charge's arc, the glints' fine arms of light — drawn by one small Metal shader on a display link of its own; the shot tool gets the same frame as a still |
+| `Sources/Arcana/Answers.swift` | as above: the four cards the sky already holds, and how it answers each — the lights it lays over itself for the Moon and the Sun, and the wheel's turn, all carried by Core Animation; the stars are the near sky's own glints, held |
 | `Sources/Arcana/Moon.swift` | tonight's moon phase, reckoned from a known new moon, and its face: the near side's seas, walled plains and rayed craters where they really lie, a day moon: pearl where the sun is on it, the seas a lilac veil of sky, the rest a ghost of the disc — painted once per phase, pixel by pixel |
 | `Sources/Arcana/Sfx.swift` | singing bowls, chimes, the swell, a drone that breathes with the sky, and the hand sounds — synthesised off the main thread at launch, played through two rooms |
 | `Assets/arcana-logo.png` | the compass/eclipse mark used for the macOS app icon |
@@ -100,7 +115,12 @@ SwiftUI at all: for each frame it is reckoned as a short list of soft shapes
 and drawn by one small Metal shader (`SkyRenderer.swift`), at 60fps while the
 room only breathes and at the display's full rate (120fps on ProMotion) while
 the question is held or light goes out across the sky. The frame is handed to
-the display off the main thread, so nothing on the table waits for it. What
+the display off the main thread, so nothing on the table waits for it. When
+the sky answers a card, SwiftUI draws nothing new either: the lights laid over
+the sky and the wheel's turn are handed to Core Animation whole, so an answer
+that takes a breath costs the main thread nothing while it comes — here a
+single SwiftUI pass, however small, costs more than a frame of the near sky,
+and a fade driven by a SwiftUI clock would have cost 6–7% of a core. What
 else moves on its own lives in small leaf views with clocks of their own — the
 title's light at 60fps only during its sweep, the thread at the display's rate
 only while light runs along it, the altar's words at 60fps while they rise, the
@@ -109,15 +129,18 @@ by being repainted. When no one can see the room — the window covered,
 minimised or hidden, the screens asleep — every clock rests and the audio
 engine stops; muting stops it too. Everything is reckoned from the time, so it
 all resumes in step. When the cards are returned, each redraws only while its
-own ink is sinking, and the sky is never touched — a return costs less than the
-ask. Idle, the app sits around 9–10% of one core — less than the 11–12% it
+own ink is sinking, and nothing in the sky is redrawn — what it answered is
+given back by Core Animation, in step with the ink — so a return costs less
+than the ask. Idle, the app sits around 9–10% of one core — less than the 11–12% it
 took when SwiftUI drew the sky at a third of the rate.
 
 ### Reviewing the look without a display
 
 `./rebuild-shots.sh` renders posed frames of every phase — including a card
-mid-writing and the question mid-hold — to `build/shots/`, useful for judging
-layout in a diff, or when the screen is not available.
+mid-writing, the question mid-hold, and the sky answering each of its four
+cards either way up — to `build/shots/`, useful for judging layout in a diff,
+or when the screen is not available. Name some to render only those:
+`./rebuild-shots.sh 35 37` renders the Moon and the Sun.
 
 ### Notes
 
