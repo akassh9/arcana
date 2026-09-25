@@ -334,16 +334,18 @@ private struct Halos: View {
           let flare = game.flare.contains(i) ? 0.45 : 0
           let rest = game.phase == .reading && game.reading == i ? 0.22 : 0
           let a = filled ? 0.24 + rest + flare : (game.phase == .draw ? 0.08 : 0)
+          // the light is laid once and only its strength changes: a gradient
+          // whose colours were animated would be painted afresh every frame
           Ellipse()
             .fill(
               RadialGradient(
                 colors: [
-                  Palette.goldLit.opacity(a * 1.4), Palette.goldLit.opacity(a * 0.45),
-                  Palette.goldLit.opacity(0),
+                  Palette.goldLit, Palette.goldLit.opacity(0.45 / 1.4), Palette.goldLit.opacity(0),
                 ],
                 center: .center, startRadius: 0, endRadius: layout.slotH * 0.78)
             )
             .frame(width: layout.slotW * 2.6, height: layout.slotH * 1.7)
+            .opacity(min(1, a * 1.4))
             .blendMode(.screen)
             .position(layout.slot(i))
         }
@@ -368,9 +370,11 @@ private struct Thread: View {
     let h: CGFloat = 40
     let xs = (0..<game.need).map { layout.slot($0).x }
 
+    // light running the thread moves quickly, so it keeps the display's own
+    // pace; its clock runs only while it moves
     TimelineView(
       .animation(
-        minimumInterval: 1.0 / 30.0, paused: reduceMotion || !game.threadLive || !game.visible)
+        minimumInterval: 1.0 / 120.0, paused: reduceMotion || !game.threadLive || !game.visible)
     ) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
       let landed = game.landed
@@ -883,7 +887,7 @@ private struct Title: View {
       .foregroundStyle(Palette.text)
       .shadow(color: Palette.goldLit.opacity(0.55), radius: 22)
       .overlay {
-        TimelineView(Bursts(period: 12, length: 3.3, fps: 24, paused: reduceMotion || resting)) { tl in
+        TimelineView(Bursts(period: 12, length: 3.3, fps: 60, paused: reduceMotion || resting)) { tl in
           let k =
             tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 12) / 3.2
           LinearGradient(
@@ -1234,13 +1238,26 @@ private struct Inspector: View {
   let size: CGSize
   let pointer: Pointer
   let reduceMotion: Bool
+  /// Its words are still rising into place; until they have, its clock
+  /// runs quick, and then settles to the pace of the card's slow float.
+  @State private var arriving = true
 
   var body: some View {
     let d = draw
     let h = min(480, size.height * 0.62)
     let w = h * 0.565
+    // Once it is closing, it takes no clicks, its clock rests and the card
+    // stops turning. A clock still running would keep turning the card toward
+    // a moving hand, each turn a spring begun afresh, and SwiftUI does not
+    // finish taking away a view that is still animating: the altar would stay,
+    // unseen, over the whole table, and take every click.
+    let open = game.inspecting != nil
 
-    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion || !game.visible)) { tl in
+    TimelineView(
+      .animation(
+        minimumInterval: arriving ? 1.0 / 60.0 : 1.0 / 30.0,
+        paused: reduceMotion || !game.visible || !open)
+    ) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
       let age = reduceMotion ? 10 : now - game.openedAt
       let b = reduceMotion ? 0.5 : Sky.breath(now)
@@ -1265,7 +1282,7 @@ private struct Inspector: View {
             AltarCard(
               draw: d, width: w, height: h,
               tilt: reduceMotion ? .zero : pointer.follow(now: now),
-              breath: b, float: reduceMotion ? 0 : sin(now * 2 * .pi / 10) * 3)
+              breath: b, float: reduceMotion ? 0 : sin(now * 2 * .pi / 10) * 3, turning: open)
           }
           .frame(width: w, height: h)
 
@@ -1327,6 +1344,13 @@ private struct Inspector: View {
     .transition(.opacity)
     .contentShape(Rectangle())
     .onTapGesture { game.closeInspector() }
+    .allowsHitTesting(open)
+    .task(id: game.openedAt) {
+      // the last of its words is in place 1.8 s after it opens
+      arriving = true
+      try? await Task.sleep(nanoseconds: 1_900_000_000)
+      if !Task.isCancelled { arriving = false }
+    }
   }
 }
 
@@ -1337,6 +1361,9 @@ private struct AltarCard: View {
   let tilt: CGPoint
   let breath: Double
   let float: Double
+  /// The altar is open, so the card turns toward the hand; as it closes, the
+  /// last turn is let go at once rather than left to settle.
+  let turning: Bool
 
   var body: some View {
     CardImages.shared.face(draw)
@@ -1365,7 +1392,8 @@ private struct AltarCard: View {
       .shadow(color: Palette.shade.opacity(0.32), radius: 36, y: 22)
       .shadow(color: Palette.goldLit.opacity(0.30 + 0.15 * breath), radius: 50)
       .offset(y: float)
-      .animation(.interactiveSpring(response: 0.8, dampingFraction: 0.86), value: tilt)
+      .animation(
+        turning ? .interactiveSpring(response: 0.8, dampingFraction: 0.86) : nil, value: tilt)
   }
 }
 

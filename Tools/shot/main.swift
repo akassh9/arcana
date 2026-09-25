@@ -28,7 +28,10 @@ MainActor.assumeIsolated {
   @MainActor func shoot(_ name: String, size: CGSize = stage, pose: (Game) -> Void) {
     let g = Game()
     pose(g)
-    save(name, RootView(game: g).frame(width: size.width, height: size.height))
+    // an ImageRenderer cannot see the near sky's Metal layer; it is drawn as a still
+    save(
+      name,
+      RootView(game: g).frame(width: size.width, height: size.height).environment(\.stillSky, true))
   }
 
   let long = Date().timeIntervalSinceReferenceDate - 60

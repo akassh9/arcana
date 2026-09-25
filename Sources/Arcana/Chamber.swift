@@ -53,29 +53,6 @@ enum Sky {
     CGPoint(x: size.width / 2, y: size.height * 1.04)
   }
 
-  /// A soft disc of light, drawn once and stamped wherever light blooms.
-  static let bloom: Image = {
-    let n = 96
-    guard
-      let ctx = CGContext(
-        data: nil, width: n, height: n, bitsPerComponent: 8, bytesPerRow: n * 4,
-        space: CGColorSpaceCreateDeviceRGB(),
-        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
-      let grad = CGGradient(
-        colorsSpace: CGColorSpaceCreateDeviceRGB(),
-        colors: [
-          CGColor(red: 1, green: 1, blue: 1, alpha: 0.55),
-          CGColor(red: 1, green: 1, blue: 1, alpha: 0.35),
-          CGColor(red: 1, green: 1, blue: 1, alpha: 0),
-        ] as CFArray, locations: [0, 0.5, 1])
-    else { return Image(systemName: "circle") }
-    let c = CGPoint(x: n / 2, y: n / 2)
-    ctx.drawRadialGradient(
-      grad, startCenter: c, startRadius: 0, endCenter: c, endRadius: CGFloat(n / 2), options: [])
-    guard let cg = ctx.makeImage() else { return Image(systemName: "circle") }
-    return Image(nsImage: NSImage(cgImage: cg, size: NSSize(width: n, height: n)))
-  }()
-
   /// The celestial wheel — twelve houses, a star of eight, drawn by the
   /// same unsteady pen as the cards, in the brown-gold of old engraving.
   static let wheel: Image = {
@@ -193,7 +170,7 @@ struct Chamber: View {
     // The broad fields of the sky are drawn once and left alone. While the
     // question is held, three of them brighten, each through a small clock
     // of its own that only fades it. Everything that moves by itself lives
-    // in the near sky, one small canvas with its own clock.
+    // in the near sky, drawn on the GPU on a clock of its own.
     ZStack {
       Palette.pearl
 
@@ -314,9 +291,10 @@ private struct MoonView: View {
 }
 
 /// Gold dust, soft blooms of light and the odd glint: the only part of the
-/// sky that moves on its own, drawn in one small canvas on its own clock.
-/// Everything in it breathes with the room — six breaths a minute. The
-/// ring the question is held in is drawn here too.
+/// sky that moves on its own. Everything in it breathes with the room — six
+/// breaths a minute. The ring the question is held in is drawn here too.
+/// It is laid as a list of soft shapes and drawn on the GPU, on a clock of
+/// its own (SkyRenderer.swift); nothing here is redrawn by SwiftUI.
 private struct NearSky: View {
   let game: Game
   let pointer: Pointer
@@ -324,126 +302,104 @@ private struct NearSky: View {
   let focus: CGPoint
   let ringR: CGFloat
   let reduceMotion: Bool
+  @Environment(\.stillSky) private var still
+  @Environment(\.displayScale) private var scale
 
   var body: some View {
     // quickens only for the ask: the sky never answers the return
     let lively =
       (game.holding && game.phase == .invocation) || game.chargeMoving || game.skyQuick
-    let asking = game.phase == .invocation
 
-    TimelineView(
-      .animation(
-        minimumInterval: lively ? 1.0 / 30.0 : 1.0 / 20.0, paused: reduceMotion || !game.visible)
-    ) { tl in
-      let now = tl.date.timeIntervalSinceReferenceDate
-      let t = reduceMotion ? 0 : now
-      let charge = game.chargeClock.value(at: now)
-      // whole while asking, fading back in once the table is cleared; after
-      // the cut it fades as the gathered light drains
-      let ring =
-        asking
-        ? (reduceMotion ? 1 : max(ramp(now - game.ringFrom, 0, 0.6), min(1, charge * 4)))
-        : min(1, charge * 1.5)
-      // a written question, given letter by letter while it is held
-      let given = !reduceMotion && asking && charge > 0.44 ? game.quill.givenPoints() : []
-      let giving = game.quill.giving
-      let peak = game.quill.peak
-      let flashes = game.flashes
-      let tilt = reduceMotion ? .zero : pointer.follow(now: now)
-      let breath = reduceMotion ? 0.5 : Sky.breath(t)
-
-      Canvas(rendersAsynchronously: true) { ctx, size in
-        drawBlooms(ctx: &ctx, size: size, t: t, tilt: tilt, breath: breath)
-        drawGlints(ctx: &ctx, size: size, t: t, charge: charge, tilt: tilt)
-        if ring > 0.002 { drawRing(ctx: &ctx, charge: charge, breath: breath, shown: ring) }
-        drawMotes(ctx: &ctx, size: size, t: t, charge: charge, breath: breath)
-        drawGiven(ctx: &ctx, points: given, of: giving, charge: charge, peak: peak)
-        drawFlashes(ctx: &ctx, t: now, flashes: flashes)
+    if still {
+      GeometryReader { geo in
+        let frame = paint(size: geo.size, now: Date().timeIntervalSinceReferenceDate)
+        if let r = SkyRenderer.shared, let cg = r.still(frame, size: geo.size, scale: scale) {
+          Image(decorative: cg, scale: scale)
+        }
+      }
+    } else {
+      // a still sky is drawn again whenever what it shows has changed
+      SkyLayer(lively: lively, moving: !reduceMotion, seen: game.visible) {
+        paint(size: $0, now: $1)
       }
     }
   }
 
-  private func drawBlooms(
-    ctx: inout GraphicsContext, size: CGSize, t: Double, tilt: CGPoint, breath: Double
+  private func paint(size: CGSize, now: TimeInterval) -> SkyPaint {
+    let t = reduceMotion ? 0 : now
+    let asking = game.phase == .invocation
+    let charge = game.chargeClock.value(at: now)
+    // whole while asking, fading back in once the table is cleared; after
+    // the cut it fades as the gathered light drains
+    let ring =
+      asking
+      ? (reduceMotion ? 1 : max(ramp(now - game.ringFrom, 0, 0.6), min(1, charge * 4)))
+      : min(1, charge * 1.5)
+    // a written question, given letter by letter while it is held
+    let given = !reduceMotion && asking && charge > 0.44 ? game.quill.givenPoints() : []
+    let tilt = reduceMotion ? .zero : pointer.follow(now: now)
+    let breath = reduceMotion ? 0.5 : Sky.breath(t)
+
+    var p = SkyPaint()
+    paintBlooms(&p, size: size, t: t, tilt: tilt, breath: breath)
+    paintGlints(&p, size: size, t: t, charge: charge, tilt: tilt)
+    if ring > 0.002 { paintRing(&p, charge: charge, breath: breath, shown: ring) }
+    paintMotes(&p, size: size, t: t, charge: charge, breath: breath)
+    paintGiven(&p, points: given, of: game.quill.giving, charge: charge, peak: game.quill.peak)
+    // with Reduce Motion the sky is still: no light goes out across it
+    if !reduceMotion { paintFlashes(&p, t: now, flashes: game.flashes) }
+    return p
+  }
+
+  private func paintBlooms(
+    _ p: inout SkyPaint, size: CGSize, t: Double, tilt: CGPoint, breath: Double
   ) {
-    let sprite = ctx.resolve(Sky.bloom)
     for b in blooms {
       let x = (b.x + 0.03 * sin(t * b.speed + b.phase)) * size.width - tilt.x * 22
       let y = (b.y + 0.02 * cos(t * b.speed * 0.8 + b.phase)) * size.height - tilt.y * 14
       let a = b.alpha * (0.75 + 0.25 * breath)
-      let rect = CGRect(x: x - b.r, y: y - b.r, width: b.r * 2, height: b.r * 2)
-      ctx.opacity = a
-      ctx.draw(sprite, in: rect)
-      ctx.opacity = 1
-      ctx.stroke(
-        Path(ellipseIn: rect.insetBy(dx: b.r * 0.08, dy: b.r * 0.08)),
-        with: .color(Palette.gold.opacity(a * 0.10)), lineWidth: 0.8)
+      let c = CGPoint(x: x, y: y)
+      p.glow(
+        c, b.r, Tone.white.opacity(0.55 * a), Tone.white.opacity(0.35 * a), Tone.white.opacity(0))
+      p.ring(c, b.r * 0.92, width: 0.8, Tone.gold.opacity(a * 0.10))
     }
   }
 
-  private func drawGlints(
-    ctx: inout GraphicsContext, size: CGSize, t: Double, charge: Double, tilt: CGPoint
+  private func paintGlints(
+    _ p: inout SkyPaint, size: CGSize, t: Double, charge: Double, tilt: CGPoint
   ) {
     for g in glints {
       let tw = max(0, sin(t * g.rate + g.phase))
       let a = pow(tw, 6) * (0.8 + charge * 0.2)
       guard a > 0.01 else { continue }
-      let x = g.x * size.width - tilt.x * 16, y = g.y * size.height - tilt.y * 11
-      let l = g.size * (0.6 + 0.4 * tw)
-      var p = Path()
-      p.move(to: CGPoint(x: x - l, y: y))
-      p.addLine(to: CGPoint(x: x + l, y: y))
-      p.move(to: CGPoint(x: x, y: y - l))
-      p.addLine(to: CGPoint(x: x, y: y + l))
-      ctx.stroke(p, with: .color(Palette.goldInk.opacity(a * 0.55)), lineWidth: 0.8)
-      ctx.fill(
-        Path(ellipseIn: CGRect(x: x - 5, y: y - 5, width: 10, height: 10)),
-        with: .radialGradient(
-          Gradient(colors: [Palette.goldLit.opacity(a * 0.7), Palette.goldLit.opacity(0)]),
-          center: CGPoint(x: x, y: y), startRadius: 0, endRadius: 5))
+      let c = CGPoint(x: g.x * size.width - tilt.x * 16, y: g.y * size.height - tilt.y * 11)
+      p.cross(c, g.size * (0.6 + 0.4 * tw), width: 0.8, Tone.goldInk.opacity(a * 0.55))
+      p.glow(c, 5, Tone.goldLit.opacity(a * 0.7), Tone.goldLit.opacity(0))
     }
   }
 
-  private func drawRing(ctx: inout GraphicsContext, charge c: Double, breath b: Double, shown: Double) {
-    func circle(_ r: Double) -> Path {
-      Path(ellipseIn: CGRect(x: focus.x - r, y: focus.y - r, width: r * 2, height: r * 2))
-    }
+  private func paintRing(_ p: inout SkyPaint, charge c: Double, breath b: Double, shown: Double) {
     let r = Double(ringR)
-    ctx.stroke(
-      circle(r * 1.2 * (1 + 0.035 * b + 0.05 * c)),
-      with: .color(Palette.goldInk.opacity((0.10 + 0.08 * b + 0.14 * c) * shown)), lineWidth: 1)
-    ctx.stroke(
-      circle(r * (1 + 0.02 * b)),
-      with: .color(Palette.goldInk.opacity((0.26 + 0.14 * b) * shown)), lineWidth: 1)
+    p.ring(
+      focus, r * 1.2 * (1 + 0.035 * b + 0.05 * c), width: 1,
+      Tone.goldInk.opacity((0.10 + 0.08 * b + 0.14 * c) * shown))
+    p.ring(focus, r * (1 + 0.02 * b), width: 1, Tone.goldInk.opacity((0.26 + 0.14 * b) * shown))
     guard c > 0.004 else { return }
 
     // the charge: an arc from the top, clockwise, glowing
-    var arc = Path()
-    arc.addArc(
-      center: focus, radius: r, startAngle: .degrees(-90), endAngle: .degrees(-90 + 360 * c),
-      clockwise: false)
-    for (w, color, a) in [
-      (14.0, Palette.goldLit, 0.20 + 0.18 * c), (6.0, Palette.goldLit, 0.45),
-      (1.8, Palette.goldInk, 0.95),
+    for (w, tone, a) in [
+      (14.0, Tone.goldLit, 0.20 + 0.18 * c), (6.0, Tone.goldLit, 0.45), (1.8, Tone.goldInk, 0.95),
     ] {
-      ctx.stroke(
-        arc, with: .color(color.opacity(a * shown)),
-        style: StrokeStyle(lineWidth: w, lineCap: .round))
+      p.arc(focus, r, width: w, from: -.pi / 2, through: 2 * .pi * c, tone.opacity(a * shown))
     }
     let head = c * 2 * .pi - .pi / 2
-    let p = CGPoint(x: focus.x + cos(head) * r, y: focus.y + sin(head) * r)
-    ctx.fill(
-      Path(ellipseIn: CGRect(x: p.x - 14, y: p.y - 14, width: 28, height: 28)),
-      with: .radialGradient(
-        Gradient(colors: [Palette.goldLit.opacity(0.9 * shown), Palette.goldLit.opacity(0)]),
-        center: p, startRadius: 0, endRadius: 14))
-    ctx.fill(
-      Path(ellipseIn: CGRect(x: p.x - 2.5, y: p.y - 2.5, width: 5, height: 5)),
-      with: .color(Palette.goldInk.opacity(shown)))
+    let h = CGPoint(x: focus.x + cos(head) * r, y: focus.y + sin(head) * r)
+    p.glow(h, 14, Tone.goldLit.opacity(0.9 * shown), Tone.goldLit.opacity(0))
+    p.disc(h, 2.5, Tone.goldInk.opacity(shown))
   }
 
-  private func drawMotes(
-    ctx: inout GraphicsContext, size: CGSize, t: Double, charge: Double, breath: Double
+  private func paintMotes(
+    _ p: inout SkyPaint, size: CGSize, t: Double, charge: Double, breath: Double
   ) {
     let gather = pow(charge, 1.4)
     for (i, m) in motes.enumerated() {
@@ -465,12 +421,9 @@ private struct NearSky: View {
       let a = min(1, m.alpha * max(0, edge) * flick * (0.8 + 0.2 * breath) * (1 + charge * 0.8))
       guard a > 0.004 else { continue }
       let r = m.size * (1 + charge * 0.5)
-      ctx.fill(
-        Path(ellipseIn: CGRect(x: x - r * 3.6, y: y - r * 3.6, width: r * 7.2, height: r * 7.2)),
-        with: .color(Palette.goldLit.opacity(a * 0.22)))
-      ctx.fill(
-        Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)),
-        with: .color(Palette.gold.opacity(a)))
+      let c = CGPoint(x: x, y: y)
+      p.disc(c, r * 3.6, Tone.goldLit.opacity(a * 0.22))
+      p.disc(c, r, Tone.gold.opacity(a))
     }
   }
 
@@ -478,8 +431,8 @@ private struct NearSky: View {
   /// dust, drawn round into the deck in the order it was written. It
   /// travels only as far as the charge has ever reached: let go, and each
   /// mote fades where it is while its letter inks again.
-  private func drawGiven(
-    ctx: inout GraphicsContext, points: [CGPoint], of n: Int, charge c: Double, peak: Double
+  private func paintGiven(
+    _ p: inout SkyPaint, points: [CGPoint], of n: Int, charge c: Double, peak: Double
   ) {
     guard !points.isEmpty, n > 0 else { return }
     for (k, g) in points.enumerated() {
@@ -496,50 +449,40 @@ private struct NearSky: View {
       let turn = (0.6 + r.next() * 0.9) * u * u
       let size = 0.8 + r.next() * 1.3
       let light = 0.55 + r.next() * 0.45
-      let p = g + origin
-      let dx = p.x - focus.x, dy = p.y - focus.y
+      let q = g + origin
+      let dx = q.x - focus.x, dy = q.y - focus.y
       let x = focus.x + (dx * cos(turn) - dy * sin(turn)) * (1 - u)
       let y = focus.y + (dx * sin(turn) + dy * cos(turn)) * (1 - u)
       let rad = size * (1 + 0.5 * c)
       let al = a * light
-      ctx.fill(
-        Path(ellipseIn: CGRect(x: x - rad * 3.6, y: y - rad * 3.6, width: rad * 7.2, height: rad * 7.2)),
-        with: .color(Palette.goldLit.opacity(al * 0.22)))
-      ctx.fill(
-        Path(ellipseIn: CGRect(x: x - rad, y: y - rad, width: rad * 2, height: rad * 2)),
-        with: .color(Palette.gold.opacity(al)))
+      let at = CGPoint(x: x, y: y)
+      p.disc(at, rad * 3.6, Tone.goldLit.opacity(al * 0.22))
+      p.disc(at, rad, Tone.gold.opacity(al))
     }
   }
 
-  private func drawFlashes(ctx: inout GraphicsContext, t: Double, flashes: [Flash]) {
+  private func paintFlashes(_ p: inout SkyPaint, t: Double, flashes: [Flash]) {
     for f in flashes {
       let age = t - f.born
       guard age >= 0, age < 2.2 else { continue }
-      let p = f.point + origin
+      let c = f.point + origin
 
       if age < 1.3 {
         let k = 1 - age / 1.3
         let ease = k * k
         let r = 70 + (1 - k) * 240 * f.strength
         let s = min(f.strength, 1.4)
-        ctx.fill(
-          Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)),
-          with: .radialGradient(
-            Gradient(colors: [
-              .white.opacity(0.85 * ease * s), Palette.goldLit.opacity(0.35 * ease * s),
-              Palette.goldLit.opacity(0),
-            ]),
-            center: p, startRadius: 0, endRadius: r))
+        p.glow(
+          c, r, Tone.white.opacity(0.85 * ease * s), Tone.goldLit.opacity(0.35 * ease * s),
+          Tone.goldLit.opacity(0))
       }
 
       // the ripple — a ring of light going out across the sky
       let k = age / 2.2
       let rr = 30 + (1 - pow(1 - k, 3)) * 520 * f.strength
       let fade = pow(1 - k, 2.2) * min(f.strength, 1.3)
-      let ring = Path(
-        ellipseIn: CGRect(x: p.x - rr, y: p.y - rr, width: rr * 2, height: rr * 2))
-      ctx.stroke(ring, with: .color(Palette.goldLit.opacity(fade * 0.35)), lineWidth: 7)
-      ctx.stroke(ring, with: .color(Palette.goldInk.opacity(fade * 0.45)), lineWidth: 1)
+      p.ring(c, rr, width: 7, Tone.goldLit.opacity(fade * 0.35))
+      p.ring(c, rr, width: 1, Tone.goldInk.opacity(fade * 0.45))
     }
   }
 }
