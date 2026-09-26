@@ -6,8 +6,9 @@ import SwiftUI
 //  and cools to ink; when the question is held, the deck reads it, and
 //  its gold goes in with the dust; it is read back above the spread.
 //
-//  It is held in memory only: kept nowhere, sent nowhere, and it never
-//  touches the shuffle.
+//  It is held in memory while it is written and read; when the cards are
+//  returned it is kept with the reading, on this Mac only (Keeping.swift).
+//  It is sent nowhere, and it never touches the shuffle.
 // ===================================================================
 
 @Observable

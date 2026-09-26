@@ -19,11 +19,13 @@ struct Moon {
 
   static var tonight: Moon { Moon(date: Date()) }
 
+  /// From one new moon to the next, in seconds.
+  static let synodic = 29.530_588_853 * 86_400
+
   init(date: Date) {
     // 2000-01-06 18:14 UTC, a new moon
     let epoch = 947_182_440.0
-    let synodic = 29.530_588_853 * 86_400
-    let a = (date.timeIntervalSince1970 - epoch) / synodic
+    let a = (date.timeIntervalSince1970 - epoch) / Moon.synodic
     age = a - floor(a)
   }
 
@@ -47,18 +49,44 @@ struct Moon {
 // --- the face -------------------------------------------------------
 
 extension Moon {
-  /// Tonight's face, `radius` points to the limb, in pixels at `scale`, a
-  /// pixel to spare all round. Painted once for each phase and size.
+  /// The face, `radius` points to the limb, in pixels at `scale`, a pixel
+  /// to spare all round. Painted once for each phase and size; the last
+  /// few are kept, for the nights a kept reading turns the moon back to.
   @MainActor func face(radius: Double, scale: Double) -> CGImage? {
     // a thousandth of a month is forty minutes: the light has not moved
     let key = [Int((age * 1000).rounded()), Int((radius * scale).rounded())]
-    if let f = Moon.painted, f.key == key { return f.image }
-    let image = Moon.paint(age: age, radius: radius * scale)
-    Moon.painted = image.map { (key, $0) }
+    if let i = Moon.painted.firstIndex(where: { $0.key == key }) {
+      let f = Moon.painted.remove(at: i)
+      Moon.painted.append(f)
+      return f.image
+    }
+    guard let image = Moon.paint(age: age, radius: radius * scale) else { return nil }
+    Moon.painted.append((key, image))
+    if Moon.painted.count > 6 { Moon.painted.removeFirst() }
     return image
   }
 
-  @MainActor private static var painted: (key: [Int], image: CGImage)?
+  @MainActor private static var painted: [(key: [Int], image: CGImage)] = []
+  @MainActor private static var preparing: Set<[Int]> = []
+
+  /// Paints the face away from the main thread and keeps it, so that when
+  /// it is wanted it is already there. The table never waits for it.
+  @MainActor func prepare(radius: Double, scale: Double) {
+    let key = [Int((age * 1000).rounded()), Int((radius * scale).rounded())]
+    guard !Moon.painted.contains(where: { $0.key == key }), !Moon.preparing.contains(key)
+    else { return }
+    Moon.preparing.insert(key)
+    let age = self.age, r = radius * scale
+    Task.detached(priority: .utility) {
+      let image = Moon.paint(age: age, radius: r)
+      await MainActor.run {
+        Moon.preparing.remove(key)
+        guard let image, !Moon.painted.contains(where: { $0.key == key }) else { return }
+        Moon.painted.append((key, image))
+        if Moon.painted.count > 6 { Moon.painted.removeFirst() }
+      }
+    }
+  }
 
   // each as straight sRGB and how opaque it is: pearl highlands, seas the
   // lilac of the sky seen through them, a limb warmed like the edge of a

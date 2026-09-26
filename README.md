@@ -32,20 +32,33 @@ at a time comes out and goes in again, the lilac clears off the sky, the light
 comes up white. An answer stays while its card lies on the table, and goes
 with the card's ink when the cards are returned.
 
+The moon keeps every reading you return. As the cards go home it brightens
+for one breath; press it, and the room clears, and your last reading lies on
+the table as the return left it — the question in ink over blank cards that
+keep their gold — while the moon turns back to how it was that night, with
+the date beneath it. Hold, and the return runs backwards: the ink rises back
+out of the stock, first card first, the bowls ring back up, and the reading
+is spoken again, with its thread if you found one. One moon later, when the
+moon is back where it was, the question you asked comes back beneath it.
+
 ## Playing
 
 | | |
 |---|---|
 | `←` `→` or `1` `2` `3` | choose a spread — one card, three fates, the long road. The arrows choose even while you are writing; the numbers are then only numbers |
-| type | before you hold, you may write the question. It is laid in gold and cools to ink; the hold gives it to the deck as dust, and it is read back above the spread. It is kept nowhere and sent nowhere |
+| type | before you hold, you may write the question. It is laid in gold and cools to ink; the hold gives it to the deck as dust, and it is read back above the spread. When the cards are returned it is kept with the reading, on this Mac only; it is sent nowhere |
 | press and hold | anywhere on the sky, or hold `space` / `return` — asks the question and cuts the deck. While writing, a tapped `space` is a space. Let go early and the light drains back |
 | sweep the hand | the fan is an instrument: each card chimes as the cursor crosses it, low on the left, high on the right |
 | `←` `→` along the fan | the hand moves a card at a time from the card under the cursor, each chiming as it passes; held, it sweeps. `space` or `return` draws the card it is on |
 | click a card | draw it; it lands, turns, and writes itself |
 | hover a drawn card | its line brightens in the verse, its light and node rise |
 | click a drawn card | opens it on the altar — it turns toward the pointer |
-| press and hold, again | press and hold the sky, or hold `space` / `return`, once the reading has been spoken: return the cards |
-| `esc` | let go / take back what you wrote / close the card / start over |
+| press and hold, again | press and hold the sky, or hold `space` / `return`, once the reading has been spoken: return the cards. The moon keeps the reading |
+| press the moon, or `↑` | what the moon keeps: the last reading you returned, or the one whose question has come back. `↑` opens it only while nothing is written |
+| `←` `→`, the moon open | an earlier reading, a later one; the marks either side of the spread do the same |
+| press and hold, the moon open | the ink rises back into the kept reading's cards, and it is spoken again. Let go early and the ink sinks back. Once it is remembered, a card opens on the altar as on the table |
+| `⌘⌫`, the moon open | lets the kept reading on the table go, for good |
+| `esc` | let go / take back what you wrote / close the card / start over / back to tonight, as do `↓` and the moon itself |
 | `m` | sound on/off. Before the ask it is a letter; the bowl, top right, always works |
 
 Cards land reversed about 42% of the time; the art turns with them, an oxblood
@@ -54,7 +67,20 @@ a darker voice.
 
 With Reduce Motion on, the hold is short, cards appear already written, and the
 sky is still. It still answers its cards, in a moment and by fading; the wheel
-does not turn, the turned wheel fades in over it.
+does not turn, the turned wheel fades in over it. A kept reading opens already
+remembered.
+
+### What the moon keeps
+
+Each reading you return is kept in
+`~/Library/Application Support/Arcana/kept.json`: the spread, each card and
+which way up it lay, the question if you wrote one, the thread if you found
+one, and when you asked. A reading left with `esc` is not kept. The file is
+plain JSON; `⌘⌫` lets one reading go, and deleting the file forgets them all.
+Nothing in it is ever sent anywhere, and nothing is counted: no totals, no
+streaks, no reminders. The only thing that comes to you unasked is a question,
+one moon after you asked it, written under the moon for a day or two, until
+you open it. `ARCANA_KEPT=/some/other.json` keeps them in another file.
 
 When a spread is complete, **find the thread** is an optional closing ritual,
 offered only when Arcana has a key to find it with (below); without one, the
@@ -86,13 +112,14 @@ reading.
 | `Sources/Arcana/Chamber.swift` | the sky at first light: pale blue, lilac, rose, dawn and its rays, the engraved wheel, the daytime moon, and the near sky — gold dust and soft blooms that breathe, glints, the hold ring, blooms and ripples |
 | `Sources/Arcana/SkyRenderer.swift` | the near sky on the GPU: each frame a short list of soft shapes — discs, glows, rings, the charge's arc, the glints' fine arms of light — drawn by one small Metal shader on a display link of its own; the shot tool gets the same frame as a still |
 | `Sources/Arcana/Answers.swift` | as above: the four cards the sky already holds, and how it answers each — the lights it lays over itself for the Moon and the Sun, and the wheel's turn, all carried by Core Animation; the stars are the near sky's own glints, held |
-| `Sources/Arcana/Moon.swift` | tonight's moon phase, reckoned from a known new moon, and its face: the near side's seas, walled plains and rayed craters where they really lie, a day moon: pearl where the sun is on it, the seas a lilac veil of sky, the rest a ghost of the disc — painted once per phase, pixel by pixel |
+| `Sources/Arcana/Keeping.swift` | what the moon keeps: each reading returned, in one small file on this Mac; the moon as its door, the kept reading laid on the table as the return left it, the return run backwards to remember it, and a question brought back a moon later |
+| `Sources/Arcana/Moon.swift` | tonight's moon phase, reckoned from a known new moon — or any night's — and its face: the near side's seas, walled plains and rayed craters where they really lie, a day moon: pearl where the sun is on it, the seas a lilac veil of sky, the rest a ghost of the disc — painted once per phase, pixel by pixel, and for the nights a kept reading may turn to, painted ahead, away from the main thread |
 | `Sources/Arcana/Sfx.swift` | singing bowls, chimes, the swell, a drone that breathes with the sky, and the hand sounds — synthesised off the main thread at launch, played through two rooms |
 | `Assets/arcana-logo.png` | the compass/eclipse mark used for the macOS app icon |
 | `Sources/Arcana/Game.swift` | the beats — the held question, the draw, the writing, the recital, the return — plus all stage geometry |
 | `Sources/Arcana/RootView.swift` | the table itself: one absolutely-positioned stage, the thread, the verse, the altar |
 | `Sources/Arcana/Weave.swift` | the optional, non-streaming spread thread provider |
-| `Sources/Arcana/Quill.swift` | the written question — laid by the pen in gold, cooling to ink, given to the deck with the dust, read back above the spread; held in memory only |
+| `Sources/Arcana/Quill.swift` | the written question — laid by the pen in gold, cooling to ink, given to the deck with the dust, read back above the spread; kept only with a reading that is returned |
 | `Sources/Arcana/QuillInput.swift` | the invisible page it is typed on — a real text view, so accents, dead keys and input methods work, with nothing drawn |
 
 Type is Didot throughout, which ships with macOS.
@@ -132,8 +159,14 @@ engine stops; muting stops it too. Everything is reckoned from the time, so it
 all resumes in step. When the cards are returned, each redraws only while its
 own ink is sinking, and nothing in the sky is redrawn — what it answered is
 given back by Core Animation, in step with the ink — so a return costs less
-than the ask. Idle, the app sits around 9–10% of one core — less than the 11–12% it
-took when SwiftUI drew the sky at a third of the rate.
+than the ask. What the moon keeps costs nothing while it rests: a kept reading
+is still images on the table, its ink rises the way the return's sank, card by
+card, and the moon's one breath of light as it takes a reading is Core
+Animation's. Another night's moon takes a moment to paint, so the nights the
+door may open on or turn to are painted ahead, away from the main thread.
+Idle, the app sits around 9–10% of one core — less than the 11–12% it took
+when SwiftUI drew the sky at a third of the rate — and less again with the
+moon's door open, where the title's light rests.
 
 ### Reviewing the look without a display
 
@@ -141,7 +174,9 @@ took when SwiftUI drew the sky at a third of the rate.
 mid-writing, the question mid-hold, and the sky answering each of its four
 cards either way up — to `build/shots/`, useful for judging layout in a diff,
 or when the screen is not available. Name some to render only those:
-`./rebuild-shots.sh 35 37` renders the Moon and the Sun.
+`./rebuild-shots.sh 35 37` renders the Moon and the Sun. Shots 44 to 55 are
+what the moon keeps; the shot tool never reads your kept readings, it lays out
+readings of its own.
 
 ### Notes
 

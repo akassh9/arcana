@@ -119,6 +119,11 @@ final class Game {
   /// never looks at what it says.
   let quill = Quill()
 
+  /// What the moon keeps: every reading returned (Keeping.swift).
+  let keeping = Keeping()
+  /// When the question now on the table was asked.
+  private var askedAt = Date()
+
   var spread: Spread { Spread.all[spreadIndex] }
   var need: Int { spread.count }
   var complete: Bool { picks.count >= need }
@@ -166,6 +171,11 @@ final class Game {
   /// early lets the gathered light drain back out; nothing is lost.
   /// Called once, as the press begins — never again while it is held.
   func pressHold(_ layout: Layout, by holder: Holder) {
+    // with the moon's door open, the same breath brings a kept reading's ink back
+    if keeping.open {
+      keeping.press(by: holder)
+      return
+    }
     if holding {
       holders.insert(holder)
       return
@@ -196,6 +206,7 @@ final class Game {
   /// Let go by one holder, or — with none named, as when the window is
   /// left — by all of them.
   func releaseHold(by holder: Holder? = nil) {
+    keeping.release(by: holder)
     if let holder {
       holders.remove(holder)
       guard holders.isEmpty else { return }
@@ -324,6 +335,12 @@ final class Game {
     rite += 1
     let rite = self.rite
     Haptics.land()
+    // the moon keeps the reading, and brightens as the cards go home
+    keeping.keep(
+      Kept(
+        at: askedAt, spread: spread, draws: picks.map { order[$0] }, question: quill.asked,
+        thread: weave),
+      glowing: now + 0.3)
     Sfx.shared.play(.slide, gain: 0.22)
     withAnimation(.easeInOut(duration: 0.5)) { faceUp = [] }
     withAnimation(.easeOut(duration: 0.45)) { homeward = true }
@@ -374,6 +391,7 @@ final class Game {
     homeward = false
     answers = []
     threadable = WeaveService.ready
+    askedAt = Date()
     phase = .draw
     // the deck has taken the question; the line is empty
     quill.give()
@@ -536,6 +554,24 @@ final class Game {
       guard let self, self.round == round else { return }
       if self.now >= self.liveUntil && !self.weaving { self.threadLive = false }
     }
+  }
+
+  // --- what the moon keeps ----------------------------------------------
+
+  /// The moon's door opens only from the room at rest, with a reading kept.
+  @discardableResult
+  func openKept() -> Bool {
+    guard phase == .invocation, !holding, !chargeMoving, roomLive, !keeping.open,
+      !keeping.readings.isEmpty
+    else { return false }
+    // a word being composed is laid, so nothing is half-written behind the door
+    quill.endComposition?()
+    keeping.openDoor(quick: quick)
+    return true
+  }
+
+  func closeKept() {
+    keeping.closeDoor()
   }
 
   // --- as above -------------------------------------------------------

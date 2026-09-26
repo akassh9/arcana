@@ -221,7 +221,7 @@ struct Chamber: View {
         .position(Sky.wheelCenter(size) + o)
         .chargeOpacity(game) { 0.055 + $0 * 0.05 }
 
-      MoonView(center: moon)
+      MoonView(game: game, center: moon)
 
       NearSky(
         game: game, pointer: pointer, origin: o, focus: layout.deck + o, ringR: layout.ringR,
@@ -341,13 +341,46 @@ private struct Rays: View {
 }
 
 /// Tonight's moon, still up in the day sky: pearl on the side the sun is
-/// on, the rest a ghost of the disc (Moon.swift).
+/// on, the rest a ghost of the disc (Moon.swift). While its door is open it
+/// is the moon of the night the reading on the table was asked
+/// (Keeping.swift); it brightens under the hand when there is something to
+/// open, and for one breath as it takes a reading.
 private struct MoonView: View {
+  let game: Game
   let center: CGPoint
   @Environment(\.displayScale) private var scale
 
   var body: some View {
-    let moon = Moon.tonight
+    let k = game.keeping
+    let moon = k.open ? (k.leaf.map { Moon(date: $0.kept.at) } ?? .tonight) : .tonight
+    ZStack {
+      MoonGlow(tookAt: k.tookAt)
+        .frame(width: 192, height: 192)
+
+      Circle()
+        .fill(
+          RadialGradient(
+            colors: [.white.opacity(0.5), .white.opacity(0)], center: .center,
+            startRadius: Sky.moonRadius, endRadius: 46))
+        .frame(width: 96, height: 96)
+        .opacity(k.moonHover ? 1 : 0)
+        .animation(.easeOut(duration: 0.3), value: k.moonHover)
+
+      // turning from one night to another, the old moon fades as the new one comes
+      MoonDisc(moon: moon, scale: scale)
+        .id(Int((moon.age * 1000).rounded()))
+        .transition(.opacity.animation(.easeInOut(duration: 0.9)))
+    }
+    .frame(width: 96, height: 96)
+    .position(center)
+  }
+}
+
+private struct MoonDisc: View {
+  let moon: Moon
+  let scale: CGFloat
+
+  var body: some View {
     let r = Sky.moonRadius
     ZStack {
       Canvas { ctx, size in
@@ -363,7 +396,6 @@ private struct MoonView: View {
       }
     }
     .frame(width: 96, height: 96)
-    .position(center)
   }
 }
 
@@ -386,8 +418,12 @@ private struct NearSky: View {
     // quickens only for the ask: the sky never answers the return
     let lively =
       (game.holding && game.phase == .invocation) || game.chargeMoving || game.skyQuick
-    // a still sky (Reduce Motion) is drawn again as a star comes out or is given back
-    let _ = reduceMotion ? (game.stirring.contains(.star), game.answers.map(game.sunk)) : (false, [])
+    // a still sky (Reduce Motion) is drawn again as a star comes out or is
+    // given back, and as the moon's door opens or closes
+    let _ =
+      reduceMotion
+      ? (game.stirring.contains(.star), game.answers.map(game.sunk), game.keeping.open)
+      : (false, [], false)
 
     if still {
       GeometryReader { geo in
@@ -410,10 +446,20 @@ private struct NearSky: View {
     let charge = game.chargeClock.value(at: now)
     // whole while asking, fading back in once the table is cleared; after
     // the cut it fades as the gathered light drains
-    let ring =
+    var ring =
       asking
       ? (reduceMotion ? 1 : max(ramp(now - game.ringFrom, 0, 0.6), min(1, charge * 4)))
       : min(1, charge * 1.5)
+    // the ring is the ask's: it goes out while the moon's door is open, and
+    // comes back with the room, however the door was closed
+    if asking {
+      let k = game.keeping
+      if k.open {
+        ring *= reduceMotion ? 0 : 1 - ramp(now - k.openedAt, 0, 0.45)
+      } else if !reduceMotion {
+        ring *= ramp(now - k.closedAt, 0.5, 1.1)
+      }
+    }
     // a written question, given letter by letter while it is held
     let given = !reduceMotion && asking && charge > 0.44 ? game.quill.givenPoints() : []
     let tilt = reduceMotion ? .zero : pointer.follow(now: now)

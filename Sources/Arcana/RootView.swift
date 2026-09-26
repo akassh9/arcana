@@ -50,6 +50,9 @@ struct RootView: View {
 
   @ViewBuilder
   private func stage(_ L: Layout, insets: EdgeInsets) -> some View {
+      // the room at rest: not while a reading is on the table, nor while
+      // the moon's door is open
+      let room = game.phase == .invocation && !game.keeping.open
       ZStack {
         Chamber(game: game, pointer: pointer, layout: L, insets: insets, reduceMotion: reduceMotion)
 
@@ -79,14 +82,20 @@ struct RootView: View {
         }
 
         // When the table is cleared the room comes back only once the cards
-        // are nearly home, so no card passes under the words. It leaves at once.
+        // are nearly home, so no card passes under the words. It leaves at
+        // once — unless it is the moon's door opening, when it steps aside.
         Invocation(game: game, layout: L, reduceMotion: reduceMotion, focus: $focused)
-          .opacity(game.phase == .invocation ? 1 : 0)
+          .opacity(room ? 1 : 0)
           .animation(
-            game.phase == .invocation ? .easeOut(duration: 1.0).delay(0.45) : nil,
-            value: game.phase == .invocation)
-          .allowsHitTesting(game.phase == .invocation && !game.holding && game.roomLive)
+            room
+              ? .easeOut(duration: 1.0).delay(0.45)
+              : (game.keeping.open ? .easeOut(duration: 0.4) : nil),
+            value: room)
+          .allowsHitTesting(room && !game.holding && game.roomLive)
           .zIndex(400)
+
+        KeptMoonLabel(game: game, layout: L)
+          .zIndex(401)
 
         Prompt(game: game, layout: L)
           .zIndex(400)
@@ -97,6 +106,9 @@ struct RootView: View {
         Stanza(game: game, layout: L)
           .zIndex(410)
 
+        KeptPage(game: game, size: L.size, reduceMotion: reduceMotion)
+          .zIndex(420)
+
         ThreadPanel(game: game, layout: L)
           .zIndex(500)
 
@@ -106,12 +118,25 @@ struct RootView: View {
         if let s = game.inspecting, let d = game.draw(atSlot: s) {
           Inspector(
             game: game, draw: d, label: game.spread.slots[s], size: L.size, pointer: pointer,
-            reduceMotion: reduceMotion)
+            reduceMotion: reduceMotion, isOpen: { game.inspecting != nil },
+            openedAt: { game.openedAt }, close: { game.closeInspector() })
+          .zIndex(900)
+        }
+
+        // a card of a kept reading, on the same altar
+        if let a = game.keeping.altar {
+          Inspector(
+            game: game, draw: a.draw, label: a.label, size: L.size, pointer: pointer,
+            reduceMotion: reduceMotion, isOpen: { game.keeping.inspecting != nil },
+            openedAt: { game.keeping.altarAt }, close: { game.keeping.closeAltar() })
           .zIndex(900)
         }
 
         MuteToggle(game: game)
           .zIndex(950)
+
+        MoonDoor(game: game, layout: L)
+          .zIndex(960)
       }
       .coordinateSpace(name: "stage")
   }
@@ -119,8 +144,15 @@ struct RootView: View {
   private func keys(_ press: KeyPress) -> KeyPress.Result {
     // a key the pen owns is passed on to the page the question is written on
     if let e = NSApp.currentEvent, QuillTextView.owns(e, in: game) { return .ignored }
+    if game.keeping.open { return keptKeys(press) }
     let c = press.key.character
     let holdKey = c == "\r" || c == " "
+
+    // up: to the moon, and what it keeps
+    if press.key == .upArrow {
+      guard press.phase == .down, game.phase == .invocation else { return .ignored }
+      return game.openKept() ? .handled : .ignored
+    }
 
     // left and right: along the spreads before the ask, and along the fan
     // during the draw, where held they sweep it like the hand
@@ -172,6 +204,44 @@ struct RootView: View {
     case "3": game.chooseSpread(2)
     case "m", "M": game.toggleMute()
     default: return .ignored
+    }
+    return .handled
+  }
+
+  /// While the moon's door is open: left and right turn through the
+  /// readings, a held space or return brings the ink back, esc or down
+  /// closes the door, and ⌘⌫ lets the reading go. Nothing is written.
+  private func keptKeys(_ press: KeyPress) -> KeyPress.Result {
+    let k = game.keeping
+    let c = press.key.character
+    let holdKey = c == "\r" || c == " "
+    if press.phase == .up {
+      if holdKey { game.releaseHold(by: .key) }
+      return .handled
+    }
+    guard press.phase == .down else { return .handled }
+    // a card of it open on the altar: esc, space or return close the altar
+    if k.inspecting != nil {
+      if holdKey || press.key == .escape { k.closeAltar() }
+      if c == "m" || c == "M" { game.toggleMute() }
+      return .handled
+    }
+    // the Delete key sends DEL, which SwiftUI names neither delete nor
+    // deleteForward; with ⌘ it lets the reading go
+    if c == "\u{7f}" || c == "\u{8}" {
+      if press.modifiers.contains(.command) { k.letGo() }
+      return .handled
+    }
+    switch press.key {
+    case .leftArrow: k.turn(-1)
+    case .rightArrow: k.turn(1)
+    case .escape, .downArrow: game.closeKept()
+    default:
+      if holdKey {
+        game.pressHold(Layout(size: stage, slots: game.need, phase: game.phase), by: .key)
+      } else if c == "m" || c == "M" {
+        game.toggleMute()
+      }
     }
     return .handled
   }
@@ -241,6 +311,11 @@ private struct CardSprite: View {
       .shadow(color: Palette.goldLit.opacity(lift > 2 || read ? 0.55 : 0), radius: 26)
       .offset(y: visualOffset)
       .opacity(gone ? 0 : (dimmed ? 0.04 : 1))
+      // the deck steps aside while the moon's door is open
+      .opacity(game.keeping.open ? 0 : 1)
+      .animation(
+        game.keeping.open ? .easeOut(duration: 0.4) : .easeOut(duration: 0.9).delay(0.4),
+        value: game.keeping.open)
       .allowsHitTesting(false)
 
       Rectangle()
@@ -321,8 +396,9 @@ private struct HoldRing: View {
 
   var body: some View {
     let r = layout.ringR
+    let room = game.phase == .invocation && !game.keeping.open
     ZStack {
-      if game.phase == .invocation {
+      if room {
         Caps(text: "press and hold", size: 9, tracking: 4.2, color: Palette.goldInk.opacity(0.75))
           .chargeOpacity(game) { 1 - $0 }
           .offset(y: r * 1.2 + 26)
@@ -333,8 +409,7 @@ private struct HoldRing: View {
     .allowsHitTesting(false)
     // it comes back with the room, never before it
     .animation(
-      game.phase == .invocation ? .easeOut(duration: 1.0).delay(0.45) : .easeOut(duration: 0.6),
-      value: game.phase == .invocation)
+      room ? .easeOut(duration: 1.0).delay(0.45) : .easeOut(duration: 0.6), value: room)
   }
 }
 
@@ -589,7 +664,9 @@ private struct Invocation: View {
           .chargeOpacity(game, quiet)
           .allowsHitTesting(false)
 
-        Title(reduceMotion: reduceMotion, resting: !game.visible || game.phase != .invocation)
+        Title(
+          reduceMotion: reduceMotion,
+          resting: !game.visible || game.phase != .invocation || game.keeping.open)
           .padding(.top, 22)
           .chargeOpacity(game, quiet)
           .allowsHitTesting(false)
@@ -617,6 +694,9 @@ private struct Invocation: View {
         .position(x: moon.x, y: moon.y + Sky.moonRadius + 20)
         .chargeOpacity(game, quiet)
         .allowsHitTesting(false)
+
+      MoonReturn(game: game, layout: layout)
+        .chargeOpacity(game, quiet)
     }
   }
 }
@@ -874,7 +954,7 @@ private struct Epigraph: View {
 }
 
 /// Handed its words, so that as it leaves it still shows them.
-private struct EpigraphLine: View {
+struct EpigraphLine: View {
   let text: String
 
   var body: some View {
@@ -891,7 +971,7 @@ private struct EpigraphLine: View {
 }
 
 /// How a line of the verse arrives: out of a little blur, settling upward.
-private struct Arrive: ViewModifier {
+struct Arrive: ViewModifier {
   let on: Bool
   func body(content: Content) -> some View {
     content.opacity(on ? 0 : 1).blur(radius: on ? 5 : 0).offset(y: on ? 7 : 0)
@@ -1262,6 +1342,12 @@ private struct Inspector: View {
   let size: CGSize
   let pointer: Pointer
   let reduceMotion: Bool
+  /// Whether the altar is still open, and when it opened, read from the
+  /// reading it belongs to — the one on the table, or one the moon kept —
+  /// each time it draws, so that it sees itself closing at once.
+  let isOpen: () -> Bool
+  let openedAt: () -> TimeInterval
+  let close: () -> Void
   /// Its words are still rising into place; until they have, its clock
   /// runs quick, and then settles to the pace of the card's slow float.
   @State private var arriving = true
@@ -1275,7 +1361,8 @@ private struct Inspector: View {
     // a moving hand, each turn a spring begun afresh, and SwiftUI does not
     // finish taking away a view that is still animating: the altar would stay,
     // unseen, over the whole table, and take every click.
-    let open = game.inspecting != nil
+    let open = isOpen()
+    let opened = openedAt()
 
     TimelineView(
       .animation(
@@ -1283,7 +1370,7 @@ private struct Inspector: View {
         paused: reduceMotion || !game.visible || !open)
     ) { tl in
       let now = tl.date.timeIntervalSinceReferenceDate
-      let age = reduceMotion ? 10 : now - game.openedAt
+      let age = reduceMotion ? 10 : now - opened
       let b = reduceMotion ? 0.5 : Sky.breath(now)
 
       ZStack {
@@ -1378,9 +1465,9 @@ private struct Inspector: View {
     }
     .transition(.opacity)
     .contentShape(Rectangle())
-    .onTapGesture { game.closeInspector() }
+    .onTapGesture { close() }
     .allowsHitTesting(open)
-    .task(id: game.openedAt) {
+    .task(id: opened) {
       // the last of its words is in place 1.8 s after it opens
       arriving = true
       try? await Task.sleep(nanoseconds: 1_900_000_000)

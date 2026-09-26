@@ -14,6 +14,9 @@ let stageScale = CGFloat(Double(ProcessInfo.processInfo.environment["ARCANA_SHOT
 let stage = CGSize(width: 1260, height: 860)
 
 MainActor.assumeIsolated {
+  // what the moon keeps is posed here, never read: no reading of yours is drawn
+  Keeping.file = nil
+
   @MainActor func save<V: View>(_ name: String, _ view: V, scale: CGFloat = 1) {
     guard only.isEmpty || only.contains(where: { name.hasPrefix($0) }) else { return }
     let renderer = ImageRenderer(content: view)
@@ -263,6 +266,77 @@ MainActor.assumeIsolated {
     g.openedAt = long
   }
   shoot("12-invocation-small", size: CGSize(width: 940, height: 660)) { _ in }
+
+  // what the moon keeps: readings returned, opened from the moon
+  @MainActor func kept(
+    _ cards: [(String, Bool)], spread: Int, daysAgo: Double, question: String = "",
+    thread: WeaveResult? = nil
+  ) -> Kept {
+    Kept(
+      at: Date().addingTimeInterval(-daysAgo * 86_400), spread: Spread.all[spread],
+      draws: cards.map { c in Draw(card: deck.first { $0.id == c.0 }!, reversed: c.1) },
+      question: question, thread: thread)
+  }
+  let woven = WeaveResult(
+    thread:
+      "What was rooted is being lifted into the light. The hand that steadies it is already yours.",
+    question: "What would you tend if no one were watching the roots?")
+  let shelf = [
+    kept([("hermit", false)], spread: 0, daysAgo: 40, question: "Is it time to call her"),
+    kept(
+      [("sun", false), ("priestess", false), ("death", true)], spread: 1, daysAgo: 12,
+      question: asked, thread: woven),
+    kept(
+      [("fool", false), ("tower", true), ("empress", false), ("star", false), ("world", false)],
+      spread: 2, daysAgo: 3),
+  ]
+  shoot("44-kept") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 1)
+  }
+  shoot("45-kept-rising") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 1, rising: 0.45)
+  }
+  shoot("46-kept-remembered") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 1, rising: 1, lines: 3)
+  }
+  shoot("47-kept-threaded") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 1, rising: 1, lines: 3, threaded: true)
+  }
+  shoot("48-kept-five") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 2)
+  }
+  shoot("49-kept-one") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 0, rising: 1, lines: 1)
+  }
+  shoot("50-brought-back") { g in
+    g.keeping.pose([kept([("moon", false), ("star", false), ("sun", true)], spread: 1, daysAgo: 29.6, question: asked)])
+  }
+  shoot("51-moon-took") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseGlow(at: Date().timeIntervalSinceReferenceDate - 1.7)
+  }
+  shoot("52-moon-hover") { g in
+    g.keeping.pose(shelf)
+    g.keeping.moonHover = true
+  }
+  shoot("54-kept-altar") { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 1, rising: 1, lines: 3, threaded: true)
+    g.keeping.poseAltar(2, at: long)
+  }
+  shoot("55-brought-back-small", size: CGSize(width: 940, height: 660)) { g in
+    g.keeping.pose([kept([("moon", false), ("star", false), ("sun", true)], spread: 1, daysAgo: 29.6, question: longest)])
+  }
+  shoot("53-kept-small", size: CGSize(width: 940, height: 660)) { g in
+    g.keeping.pose(shelf)
+    g.keeping.poseOpen(page: 2, rising: 1, lines: 5)
+  }
 
   // a card being written, left to right: 12% … finished
   let d = Draw(card: deck[17], reversed: false)
