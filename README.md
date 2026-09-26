@@ -36,10 +36,11 @@ with the card's ink when the cards are returned.
 
 | | |
 |---|---|
-| `1` `2` `3` | choose a spread — one card, three fates, the long road. Once you are writing, they are only numbers |
+| `←` `→` or `1` `2` `3` | choose a spread — one card, three fates, the long road. The arrows choose even while you are writing; the numbers are then only numbers |
 | type | before you hold, you may write the question. It is laid in gold and cools to ink; the hold gives it to the deck as dust, and it is read back above the spread. It is kept nowhere and sent nowhere |
 | press and hold | anywhere on the sky, or hold `space` / `return` — asks the question and cuts the deck. While writing, a tapped `space` is a space. Let go early and the light drains back |
 | sweep the hand | the fan is an instrument: each card chimes as the cursor crosses it, low on the left, high on the right |
+| `←` `→` along the fan | the hand moves a card at a time from the card under the cursor, each chiming as it passes; held, it sweeps. `space` or `return` draws the card it is on |
 | click a card | draw it; it lands, turns, and writes itself |
 | hover a drawn card | its line brightens in the verse, its light and node rise |
 | click a drawn card | opens it on the altar — it turns toward the pointer |

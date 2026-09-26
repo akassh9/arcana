@@ -122,6 +122,23 @@ struct RootView: View {
     let c = press.key.character
     let holdKey = c == "\r" || c == " "
 
+    // left and right: along the spreads before the ask, and along the fan
+    // during the draw, where held they sweep it like the hand
+    if press.key == .leftArrow || press.key == .rightArrow {
+      guard press.phase != .up, game.inspecting == nil else { return .ignored }
+      let d = press.key == .leftArrow ? -1 : 1
+      switch game.phase {
+      case .invocation where press.phase == .down: game.chooseSpread(game.spreadIndex + d)
+      case .draw:
+        // coming to the fan, the hand arrives where the cursor is
+        let L = Layout(size: stage, slots: game.need, phase: game.phase)
+        let x = (pointer.at.x + 1) / 2 * stage.width
+        game.step(d, near: L.fanIndex(nearX: x, of: game.order.count))
+      default: return .ignored
+      }
+      return .handled
+    }
+
     if press.phase == .up {
       guard holdKey else { return .ignored }
       game.releaseHold(by: .key)
@@ -132,11 +149,15 @@ struct RootView: View {
     switch c {
     case "\r", " ":
       // held, these ask the question — and, once the reading has been
-      // spoken, return the cards
+      // spoken, return the cards; during the draw they take the card the
+      // hand is on
+      let L = Layout(size: stage, slots: game.need, phase: game.phase)
       if game.inspecting != nil {
         game.closeInspector()
+      } else if game.phase == .draw, let h = game.hovered {
+        game.take(h, landing: L.slot(game.picks.count))
       } else {
-        game.pressHold(Layout(size: stage, slots: game.need, phase: game.phase), by: .key)
+        game.pressHold(L, by: .key)
       }
     case "\u{1b}":
       if game.holding && game.phase == .invocation {

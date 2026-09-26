@@ -144,10 +144,15 @@ final class QuillTextView: NSTextView {
     if mods.contains(.command) || mods.contains(.control) { return false }
     if g.holding { return q.held.contains(e.keyCode) || writes(e) }
     // emptiness, not the invitation's grace, decides: a 2 on an empty line
-    // always chooses a spread
-    if !q.isEmpty || q.composing() { return !isReturn(e) || q.composing() }
+    // always chooses a spread. The left and right arrows never write, so
+    // even mid-question they choose it — unless an input method needs them.
+    if q.composing() { return true }
+    if !q.isEmpty { return !isReturn(e) && !isAcross(e) }
     return writes(e)
   }
+
+  /// The left and right arrows, which move along the spreads.
+  static func isAcross(_ e: NSEvent) -> Bool { e.keyCode == 123 || e.keyCode == 124 }
 
   func configure() {
     alphaValue = 0

@@ -46,6 +46,9 @@ final class Game {
   var inked: Set<Int> = []
   var dealt = false
   var hovered: Int?
+  /// Where the arrow keys last left the hand on the fan, so a card taken
+  /// from under it leaves the hand beside the gap.
+  private var keyHand: Int?
   var reading: Int?  // slot the cursor is resting on
   var inspecting: Int?  // slot opened full size
   var flashes: [Flash] = []
@@ -392,10 +395,35 @@ final class Game {
     }
   }
 
+  /// The arrow keys move the hand along the fan: from the card under the
+  /// cursor, or beside the last one taken, to the next card still in the fan
+  /// that way, sounding as it would under the hand. Coming to the fan with
+  /// neither, the hand arrives at the card `near` the cursor, so nothing
+  /// jumps. At the end of the fan it stays where it is; the mouse, moving,
+  /// always has the hand back.
+  func step(_ d: Int, near: Int? = nil) {
+    guard phase == .draw, dealt, !complete else { return }
+    let free = order.indices.filter { !picks.contains($0) }
+    guard !free.isEmpty else { return }
+    let next: Int?
+    if let f = hovered ?? keyHand {
+      let beside = d > 0 ? free.first { $0 > f } : free.last { $0 < f }
+      // beside a gap at the end of the fan, the nearest card, whichever way
+      next = beside ?? (hovered == nil ? (d > 0 ? free.last : free.first) : nil)
+    } else {
+      let at = near ?? order.count / 2
+      next = free.min { abs($0 - at) < abs($1 - at) }
+    }
+    guard let n = next else { return }
+    keyHand = n
+    hover(n)
+  }
+
   func take(_ i: Int, landing: CGPoint) {
     guard phase == .draw, !complete, !picks.contains(i) else { return }
     CardImages.shared.prewarm(order[i])
     hovered = nil
+    keyHand = i  // however it was taken, the hand is at the gap it left
     let slot = picks.count
     let round = self.round
     let d = order[i]
@@ -649,6 +677,8 @@ final class Game {
   private func clearTable() {
     inspecting = nil
     reading = nil
+    hovered = nil
+    keyHand = nil
     weaving = false
     weave = nil
     weaveError = false
@@ -792,6 +822,14 @@ struct Layout {
         y: handY + CGFloat(k * k) * sag - lift),
       12.0 * k
     )
+  }
+
+  /// The card of a fan of `n` lying nearest across from `x`.
+  func fanIndex(nearX x: CGFloat, of n: Int) -> Int {
+    guard n > 1 else { return 0 }
+    let span = size.width * 0.74
+    let k = min(1, max(-1, (x - size.width / 2) / (span / 2)))
+    return Int(((k + 1) / 2 * CGFloat(n - 1)).rounded())
   }
 
   /// Before the cut: a squared deck lying on the table. The top card is
