@@ -3,7 +3,7 @@
 A tarot reading room for macOS. Native SwiftUI, no dependencies — all
 seventy-eight cards are drawn by code and every sound is synthesised at launch.
 
-![A Three Fates reading in Arcana: the written question set above the spread, three cards, and the reading spoken as verse](docs/arcana.png)
+![A Three Fates reading in Arcana: the written question set above the spread, the Six of Cups, the Star and the Six of Swords, and the reading spoken as verse](docs/arcana.png)
 
 ```bash
 ./build.sh && open build/Arcana.app

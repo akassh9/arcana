@@ -253,9 +253,9 @@ MainActor.assumeIsolated {
   }
   shoot("42-one-moon") { g in answered(g, spread: 0, [("moon", false)]) }
   // the README's picture (docs/arcana.png): the question, read back over a
-  // reading whose Sun the sky has answered
+  // reading of two suit cards and the Star, whose stars the sky has let out
   shoot("00-readme") { g in
-    answered(g, spread: 1, [("sun", false), ("priestess", false), ("death", true)])
+    answered(g, spread: 1, [("cups-6", false), ("star", false), ("swords-6", false)])
     g.quill.poseAsked(asked, at: long)
     g.sounded = false  // the moment the verse is spoken, before the chord and its prompt
   }
