@@ -405,27 +405,28 @@ final class Game {
   }
 
   /// The hand moves across the fan; each card it passes sounds.
-  func hover(_ i: Int?) {
+  func hover(_ i: Int?, stepped: Bool = false) {
     guard hovered != i else { return }
     hovered = i
     if let i, phase == .draw, !complete {
-      Sfx.shared.chime(position: i, of: order.count)
+      Sfx.shared.chime(position: i, of: order.count, again: stepped)
     }
   }
 
   /// The arrow keys move the hand along the fan: from the card under the
-  /// cursor, or beside the last one taken, to the next card still in the fan
-  /// that way, sounding as it would under the hand. Coming to the fan with
+  /// cursor, or beside the last one taken, `by` cards still in the fan that
+  /// way, sounding as it would under the hand. Coming to the fan with
   /// neither, the hand arrives at the card `near` the cursor, so nothing
   /// jumps. At the end of the fan it stays where it is; the mouse, moving,
   /// always has the hand back.
-  func step(_ d: Int, near: Int? = nil) {
+  func step(_ d: Int, by count: Int = 1, near: Int? = nil) {
     guard phase == .draw, dealt, !complete else { return }
     let free = order.indices.filter { !picks.contains($0) }
     guard !free.isEmpty else { return }
     let next: Int?
     if let f = hovered ?? keyHand {
-      let beside = d > 0 ? free.first { $0 > f } : free.last { $0 < f }
+      let ahead = d > 0 ? free.filter { $0 > f } : Array(free.filter { $0 < f }.reversed())
+      let beside = ahead.isEmpty ? nil : ahead[min(count, ahead.count) - 1]
       // beside a gap at the end of the fan, the nearest card, whichever way
       next = beside ?? (hovered == nil ? (d > 0 ? free.last : free.first) : nil)
     } else {
@@ -434,8 +435,13 @@ final class Game {
     }
     guard let n = next else { return }
     keyHand = n
-    hover(n)
+    hover(n, stepped: true)
   }
+
+  /// How many cards a held arrow key moves the hand at each repeat, so it
+  /// crosses the seventy-eight as fast as it once crossed twenty-two; a
+  /// single press still moves it one.
+  var sweep: Int { max(1, Int((Double(order.count - 1) / 21).rounded())) }
 
   func take(_ i: Int, landing: CGPoint) {
     guard phase == .draw, !complete, !picks.contains(i) else { return }
@@ -872,7 +878,9 @@ struct Layout {
   /// highest; the edges of the rest show beneath it, as a deck's front
   /// face does when you look down at it.
   func stack(_ i: Int, of n: Int) -> (point: CGPoint, angle: Double) {
-    let depth = CGFloat(n - 1 - i)
+    // a fuller deck stands taller, though not in proportion: seventy-eight
+    // cards about twice the height of twenty-two
+    let depth = CGFloat(n - 1 - i) * min(1, (21 / CGFloat(max(1, n - 1))).squareRoot())
     return (CGPoint(x: size.width / 2, y: handY - 16 + depth * 0.5), 0)
   }
 }

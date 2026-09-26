@@ -1,7 +1,7 @@
 # Arcana
 
-A tarot reading room for macOS. Native SwiftUI, no dependencies — every card is
-drawn by code and every sound is synthesised at launch.
+A tarot reading room for macOS. Native SwiftUI, no dependencies — all
+seventy-eight cards are drawn by code and every sound is synthesised at launch.
 
 ![A Three Fates reading in Arcana: the written question set above the spread, three cards, and the reading spoken as verse](docs/arcana.png)
 
@@ -20,6 +20,16 @@ thread of light is laid beneath the spread as it grows. Then the reading is
 spoken back as verse, one line per card, and the whole spread sounds as one
 chord. When it is over you hold once more, and the cards are returned: the ink
 sinks into the stock, the gold stays, and they go home to the deck.
+
+The deck is the whole seventy-eight: the twenty-two, and the four suits of
+cups, wands, swords and pentacles. Once it is cut, it is laid out as a ribbon,
+every card in reach of the hand. The suits are drawn as the old Marseille pips
+were, so many cups or swords to a card, and the way they lie tells the card:
+two cups still standing beside three knocked over, a heart with three swords
+through it, ten pentacles on the tree of life. The court cards set their
+suit's emblem where their rank belongs — the page on the ground, the knight on
+the road, the queen in the ring, the king on the seat. Each card keeps about
+one gold, and that is what the return leaves in the stock.
 
 Four of the cards are already in the sky — the Wheel, the Star, the Moon and
 the Sun — and when one of them is drawn, the sky answers it once the card has
@@ -48,8 +58,8 @@ moon is back where it was, the question you asked comes back beneath it.
 | `←` `→` or `1` `2` `3` | choose a spread — one card, three fates, the long road. The arrows choose even while you are writing; the numbers are then only numbers |
 | type | before you hold, you may write the question. It is laid in gold and cools to ink; the hold gives it to the deck as dust, and it is read back above the spread. When the cards are returned it is kept with the reading, on this Mac only; it is sent nowhere |
 | press and hold | anywhere on the sky, or hold `space` / `return` — asks the question and cuts the deck. While writing, a tapped `space` is a space. Let go early and the light drains back |
-| sweep the hand | the fan is an instrument: each card chimes as the cursor crosses it, low on the left, high on the right |
-| `←` `→` along the fan | the hand moves a card at a time from the card under the cursor, each chiming as it passes; held, it sweeps. `space` or `return` draws the card it is on |
+| sweep the hand | the ribbon is an instrument: a sweep plays up the scale, one note to every few cards, low on the left, high on the right; moving slowly, the hand sounds every card |
+| `←` `→` along the ribbon | the hand moves a card at a time from the card under the cursor, each chiming as it passes; held, it sweeps, a few cards at a time. `space` or `return` draws the card it is on |
 | click a card | draw it; it lands, turns, and writes itself |
 | hover a drawn card | its line brightens in the verse, its light and node rise |
 | click a drawn card | opens it on the altar — it turns toward the pointer |
@@ -107,7 +117,8 @@ reading.
 |---|---|
 | `Sources/Arcana/Ink.swift` | a pen that draws like a hand — every stroke bowed, every vertex nudged by a seeded generator, so a card is identical each run but never mechanical |
 | `Sources/Arcana/CardArt.swift` | the twenty-two compositions, the card frame, the blind-embossed reverse with its one sun of gold leaf, the celestial wheel, the app icon; and what each card leaves in the stock when its ink has sunk |
-| `Sources/Arcana/Deck.swift` | the deck. One line per card, per orientation; one note per position |
+| `Sources/Arcana/Suits.swift` | the fifty-six: one emblem to a suit — cup, wand, sword, pentacle — laid out so each number tells its card, and the court cards, each rank in its place |
+| `Sources/Arcana/Deck.swift` | the deck: the twenty-two, then the four suits. One line per card, per orientation; one note per position |
 | `Sources/Arcana/CardImages.swift` | faces rasterised once via `ImageRenderer`; a card being revealed is drawn live, stroke by stroke, then swapped for its raster. A card being returned is its raster fading off its pressed blank — the same grammar as the reverse: stock, pressed lines, one gold |
 | `Sources/Arcana/Chamber.swift` | the sky at first light: pale blue, lilac, rose, dawn and its rays, the engraved wheel, the daytime moon, and the near sky — gold dust and soft blooms that breathe, glints, the hold ring, blooms and ripples |
 | `Sources/Arcana/SkyRenderer.swift` | the near sky on the GPU: each frame a short list of soft shapes — discs, glows, rings, the charge's arc, the glints' fine arms of light — drawn by one small Metal shader on a display link of its own; the shot tool gets the same frame as a still |
@@ -164,6 +175,10 @@ is still images on the table, its ink rises the way the return's sank, card by
 card, and the moon's one breath of light as it takes a reading is Core
 Animation's. Another night's moon takes a moment to paint, so the nights the
 door may open on or turn to are painted ahead, away from the main thread.
+The ribbon of seventy-eight is still cards lying on the table: at rest it costs
+no more than the old hand of twenty-two did. A hand sweeping it costs more —
+about a third of a core while the hand moves, where the old fan took a quarter
+— and drops no frames.
 Idle, the app sits around 9–10% of one core — less than the 11–12% it took
 when SwiftUI drew the sky at a third of the rate — and less again with the
 moon's door open, where the title's light rests.
@@ -176,7 +191,8 @@ cards either way up — to `build/shots/`, useful for judging layout in a diff,
 or when the screen is not available. Name some to render only those:
 `./rebuild-shots.sh 35 37` renders the Moon and the Sun. Shots 44 to 55 are
 what the moon keeps; the shot tool never reads your kept readings, it lays out
-readings of its own.
+readings of its own. Shots 56 to 61 are the full deck: the ribbon, the suits on
+the table and the altar, a return, and every card of the four suits.
 
 ### Notes
 

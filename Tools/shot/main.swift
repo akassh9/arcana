@@ -338,6 +338,57 @@ MainActor.assumeIsolated {
     g.keeping.poseOpen(page: 2, rising: 1, lines: 5)
   }
 
+  // the minor arcana: all seventy-eight laid out as a ribbon, and the suits
+  // on the table beside the twenty-two
+  shoot("56-ribbon-hand") { g in
+    var order = g.order
+    if let j = order.firstIndex(where: { $0.card.id == "cups-5" }) { order.swapAt(0, j) }
+    g.order = order
+    g.phase = .draw
+    g.dealt = true
+    g.picks = [0]
+    g.faceUp = [0]
+    g.inked = [0]
+    g.landed[0] = long
+    g.hover(44)
+  }
+  shoot("57-minors") { g in
+    answered(g, spread: 1, [("cups-5", false), ("cups-queen", false), ("star", false)])
+  }
+  // a court card, reversed, on the altar: it has no number, only its turn
+  shoot("58-altar-court") { g in
+    answered(g, spread: 1, [("swords-3", false), ("wands-queen", true), ("pentacles-10", false)])
+    g.inspecting = 1
+    g.openedAt = long
+  }
+  // given back, each keeps only its gold: the heart, the dawn, the two cups standing
+  shoot("59-returning-minors") { g in
+    answered(g, spread: 1, [("swords-3", false), ("swords-10", false), ("cups-5", false)])
+    givenBack(g, at: 0.9)
+  }
+  shoot("60-ribbon-small", size: CGSize(width: 940, height: 660)) { g in
+    g.phase = .draw
+    g.dealt = true
+    g.hover(30)
+  }
+
+  // every card of the four suits, a suit to a row
+  save(
+    "61-suits",
+    VStack(spacing: 14) {
+      ForEach(Suit.allCases, id: \.self) { s in
+        HStack(spacing: 10) {
+          ForEach(deck.filter { $0.id.hasPrefix(s.rawValue + "-") }, id: \.id) { c in
+            CardImages.shared.face(Draw(card: c, reversed: false)).resizable()
+              .frame(width: 113, height: 200)
+          }
+        }
+      }
+    }
+    .padding(24)
+    .background(Palette.pearl),
+    scale: 1.5)
+
   // a card being written, left to right: 12% … finished
   let d = Draw(card: deck[17], reversed: false)
   let steps: [Double] = [0.08, 0.2, 0.34, 0.5, 0.68, 0.86, 1]

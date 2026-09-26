@@ -44,6 +44,7 @@ final class Sfx {
   private var swellBuffer: AVAudioPCMBuffer?
 
   private var lastChime: TimeInterval = 0
+  private var lastNote = -1
   private var droneLevel: Float = 0
   private var droneTarget: Float = 0.42
   private var swellFade: Task<Void, Never>?
@@ -201,14 +202,19 @@ final class Sfx {
     fire(buf, on: .air, gain: gain)
   }
 
-  /// The fan is an instrument: low on the left, high on the right.
-  func chime(position i: Int, of n: Int) {
+  /// The fan is an instrument: a card under the hand, `i` of `n`, low on the
+  /// left, high on the right. There are more cards than notes, so a sweep
+  /// sounds each note once as the hand crosses into it, as a harp does; a
+  /// hand moving slowly, or stepping card by card (`again`), sounds each card.
+  func chime(position i: Int, of n: Int, again: Bool = false) {
     guard !chimes.isEmpty else { return }
     let now = Date().timeIntervalSinceReferenceDate
     guard now - lastChime > 0.035 else { return }
-    lastChime = now
     let t = n <= 1 ? 0.5 : Double(i) / Double(n - 1)
     let idx = Int((t * Double(chimes.count - 1)).rounded())
+    guard again || idx != lastNote || now - lastChime > 0.5 else { return }
+    lastChime = now
+    lastNote = idx
     fire(chimes[idx], on: .air, gain: 0.11, pan: Float(t * 2 - 1) * 0.7)
   }
 

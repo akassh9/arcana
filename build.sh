@@ -45,7 +45,7 @@ else
   echo "  logo asset unavailable; trying the code-drawn fallback"
   if CLANG_MODULE_CACHE_PATH="$CLANG_CACHE" swiftc -O -target "$TARGET" -o build/mkicon \
        Sources/Arcana/Ink.swift Sources/Arcana/Palette.swift Sources/Arcana/Deck.swift \
-       Sources/Arcana/CardArt.swift Sources/Arcana/CardImages.swift \
+       Sources/Arcana/CardArt.swift Sources/Arcana/Suits.swift Sources/Arcana/CardImages.swift \
        Tools/icon/main.swift \
      && build/mkicon build/icon.png; then
     ICONSET=build/AppIcon.iconset

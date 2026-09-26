@@ -165,7 +165,8 @@ struct RootView: View {
         // coming to the fan, the hand arrives where the cursor is
         let L = Layout(size: stage, slots: game.need, phase: game.phase)
         let x = (pointer.at.x + 1) / 2 * stage.width
-        game.step(d, near: L.fanIndex(nearX: x, of: game.order.count))
+        game.step(
+          d, by: press.phase == .repeat ? game.sweep : 1, near: L.fanIndex(nearX: x, of: game.order.count))
       default: return .ignored
       }
       return .handled
@@ -297,8 +298,13 @@ private struct CardSprite: View {
       !gone && game.inspecting == nil && game.phase != .invocation && !game.returning
     let sink = game.sinks[index]?.v ?? 0
     // squared up, the deck throws one shadow, from its lowest card;
-    // twenty-two of them stacked would pool into a slab
-    let shade = game.dealt || isPlaced || index == 0 ? 0.7 : 0
+    // twenty-two of them stacked would pool into a slab. Laid out, the
+    // seventy-eight lie so close that each throws only its share, so
+    // together they pool no darker than a hand of twenty-two did
+    let share =
+      game.dealt && !isPlaced && lift <= 2
+      ? pow(min(1, 21 / Double(max(1, game.order.count - 1))), 0.85) : 1
+    let shade = (game.dealt || isPlaced || index == 0 ? 0.7 : 0) * share
 
     ZStack {
       FlipCard(
@@ -361,7 +367,7 @@ private struct CardSprite: View {
     .animation(.easeOut(duration: 0.5), value: gone)
     .animation(
       .spring(response: 0.72, dampingFraction: 0.8)
-        .delay(Double(index) * 0.013),
+        .delay(Double(index) * 0.013 * (21 / Double(max(21, game.order.count - 1))).squareRoot()),
       value: game.dealt)
   }
 }
@@ -1420,10 +1426,13 @@ private struct Inspector: View {
                 .shadow(color: Palette.goldLit.opacity(0.45), radius: 16)
                 .fixedSize(horizontal: false, vertical: true)
               HStack(spacing: 10) {
-                Caps(text: d.card.roman, size: 10, tracking: 3, color: Palette.text.opacity(0.42))
+                // a court card has no number; its line says only which way up
+                if !d.card.roman.isEmpty {
+                  Caps(text: d.card.roman, size: 10, tracking: 3, color: Palette.text.opacity(0.42))
+                }
                 if d.reversed {
                   Caps(
-                    text: "· reversed", size: 10, tracking: 3,
+                    text: d.card.roman.isEmpty ? "reversed" : "· reversed", size: 10, tracking: 3,
                     color: Palette.blood)
                 }
               }

@@ -1,14 +1,28 @@
 import SwiftUI
 
 // ===================================================================
-//  CardArt — twenty-two compositions, one frame, one reverse.
+//  CardArt — twenty-two compositions, one frame, one reverse. The
+//  fifty-six of the suits are laid out in Suits.swift.
 //  Art space is 186 × 248; the frame and back use 226 × 400.
 // ===================================================================
 
-enum ArtKind: String {
+enum ArtKind: Hashable {
   case fool, magician, priestess, empress, emperor, hierophant, lovers, chariot
   case strength, hermit, wheel, justice, hanged, death, temperance, devil
   case tower, star, moon, sun, judgement, world
+  /// The ace (1) to the ten of a suit.
+  case pip(Suit, Int)
+  case court(Suit, Court)
+
+  /// What seeds the pen. For the twenty-two it is the case's own name, as
+  /// it always was, so each is drawn stroke for stroke as before.
+  var name: String {
+    switch self {
+    case .pip(let s, let n): return "\(s.rawValue)-\(n)"
+    case .court(let s, let c): return "\(s.rawValue)-\(c.rawValue)"
+    default: return String(describing: self)
+    }
+  }
 }
 
 enum CardArt {
@@ -22,7 +36,7 @@ enum CardArt {
   private static let CY = artH / 2
 
   static func marks(_ kind: ArtKind) -> [Mark] {
-    var pen = Pen(seed: seedHash(kind.rawValue) ^ 0x9E37_79B9)
+    var pen = Pen(seed: seedHash(kind.name) ^ 0x9E37_79B9)
     switch kind {
     case .fool: fool(&pen)
     case .magician: magician(&pen)
@@ -46,6 +60,7 @@ enum CardArt {
     case .sun: sun(&pen)
     case .judgement: judgement(&pen)
     case .world: world(&pen)
+    case .pip, .court: Suits.draw(&pen, kind)
     }
     return pen.marks
   }
