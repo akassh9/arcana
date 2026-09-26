@@ -18,10 +18,26 @@ MainActor.assumeIsolated {
     guard only.isEmpty || only.contains(where: { name.hasPrefix($0) }) else { return }
     let renderer = ImageRenderer(content: view)
     renderer.scale = scale
+    // eight bits to a channel, whatever the stage was drawn with: a deep
+    // light (the Sun's rays) would otherwise make the whole picture deep
+    func flat(_ space: CGColorSpace?, _ w: Int, _ h: Int) -> CGContext? {
+      guard let space, space.model == .rgb else { return nil }
+      return CGContext(
+        data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: space,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+    }
     guard let ns = renderer.nsImage,
       let tiff = ns.tiffRepresentation,
-      let rep = NSBitmapImageRep(data: tiff),
-      let png = rep.representation(using: .png, properties: [:])
+      let deep = NSBitmapImageRep(data: tiff)?.cgImage,
+      let ctx = flat(deep.colorSpace, deep.width, deep.height)
+        ?? flat(CGColorSpace(name: CGColorSpace.sRGB), deep.width, deep.height)
+    else {
+      print("× \(name)")
+      return
+    }
+    ctx.draw(deep, in: CGRect(x: 0, y: 0, width: deep.width, height: deep.height))
+    guard let still = ctx.makeImage(),
+      let png = NSBitmapImageRep(cgImage: still).representation(using: .png, properties: [:])
     else {
       print("× \(name)")
       return
@@ -233,6 +249,13 @@ MainActor.assumeIsolated {
     givenBack(g, at: 0.55)
   }
   shoot("42-one-moon") { g in answered(g, spread: 0, [("moon", false)]) }
+  // the README's picture (docs/arcana.png): the question, read back over a
+  // reading whose Sun the sky has answered
+  shoot("00-readme") { g in
+    answered(g, spread: 1, [("sun", false), ("priestess", false), ("death", true)])
+    g.quill.poseAsked(asked, at: long)
+    g.sounded = false  // the moment the verse is spoken, before the chord and its prompt
+  }
   shoot("43-altar-asked") { g in
     answered(g, spread: 1, [("empress", false), ("star", false), ("chariot", false)])
     g.quill.poseAsked(asked, at: long)
