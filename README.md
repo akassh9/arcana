@@ -117,7 +117,7 @@ reading.
 An agent can draw for you too. Tell it:
 
 ```text
-Add a daily tarot reading to my morning brief. Use https://arcana.khanikad.workers.dev/today
+Add a daily tarot reading to my morning brief. Use https://arcana.khanikad.workers.dev/today, and read the cards in light of what you know about me and my day.
 ```
 
 Every fetch is a fresh cut of the whole seventy-eight, in the deck's own lines,
