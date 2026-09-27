@@ -372,6 +372,11 @@ MainActor.assumeIsolated {
     g.hover(30)
   }
 
+  // the keys, laid over the room; and in the smallest window's stage, under
+  // its title bar
+  shoot("62-keys") { g in g.legend = true }
+  shoot("63-keys-small", size: CGSize(width: 940, height: 628)) { g in g.legend = true }
+
   // every card of the four suits, a suit to a row
   save(
     "61-suits",

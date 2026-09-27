@@ -974,17 +974,20 @@ private struct TurnMark: View {
 // ===================================================================
 
 /// The moon takes a press only while it has something to open: at rest in
-/// the room, with a reading kept, or with its door open, to close it.
+/// the room, with a reading kept, or with its door open, to close it — and
+/// never while the keys are open over it.
 struct MoonDoor: View {
   let game: Game
   let layout: Layout
 
   var body: some View {
     let k = game.keeping
+    // under the keys a click on it only closes them
     let can =
-      k.open
-      || (game.phase == .invocation && !game.holding && !game.chargeMoving && game.roomLive
-        && !k.readings.isEmpty)
+      !game.legend
+      && (k.open
+        || (game.phase == .invocation && !game.holding && !game.chargeMoving && game.roomLive
+          && !k.readings.isEmpty))
     Button(action: {
       if k.open { game.closeKept() } else { game.openKept() }
     }) {

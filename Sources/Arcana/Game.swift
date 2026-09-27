@@ -121,6 +121,15 @@ final class Game {
 
   /// What the moon keeps: every reading returned (Keeping.swift).
   let keeping = Keeping()
+  /// The keys are laid over the room (Legend.swift).
+  var legend = false
+  /// When the keys were last opened and closed; polled by the near sky,
+  /// whose ring goes out and comes back with the room. Never observed.
+  @ObservationIgnored private(set) var legendOpenedAt: TimeInterval = 0
+  @ObservationIgnored private(set) var legendClosedAt: TimeInterval = -.infinity
+  /// Something is open over the room — the moon's door, or the keys — so
+  /// nothing is written on the question's page.
+  var covered: Bool { keeping.open || legend }
   /// When the question now on the table was asked.
   private var askedAt = Date()
 
@@ -171,6 +180,8 @@ final class Game {
   /// early lets the gathered light drain back out; nothing is lost.
   /// Called once, as the press begins — never again while it is held.
   func pressHold(_ layout: Layout, by holder: Holder) {
+    // nothing beneath the keys is asked, returned or remembered
+    if legend { return }
     // with the moon's door open, the same breath brings a kept reading's ink back
     if keeping.open {
       keeping.press(by: holder)
@@ -527,7 +538,9 @@ final class Game {
       while true {
         try? await Task.sleep(nanoseconds: 13_000_000_000)
         guard self.round == round, self.phase == .reading else { return }
-        if self.inspecting == nil && !self.weaving && !self.returning && self.visible {
+        if self.inspecting == nil && !self.weaving && !self.returning && self.visible
+          && !self.legend
+        {
           self.runSpark()
         }
       }
@@ -567,7 +580,7 @@ final class Game {
   /// The moon's door opens only from the room at rest, with a reading kept.
   @discardableResult
   func openKept() -> Bool {
-    guard phase == .invocation, !holding, !chargeMoving, roomLive, !keeping.open,
+    guard phase == .invocation, !holding, !chargeMoving, roomLive, !keeping.open, !legend,
       !keeping.readings.isEmpty
     else { return false }
     // a word being composed is laid, so nothing is half-written behind the door
@@ -579,6 +592,29 @@ final class Game {
   func closeKept() {
     keeping.closeDoor()
   }
+
+  // --- the keys -------------------------------------------------------
+
+  /// The keys, laid over whatever the room is doing. A breath being held is
+  /// let go and a word being composed is laid, so nothing is left half done
+  /// beneath them.
+  func openLegend() {
+    guard !legend else { return }
+    releaseHold()
+    quill.endComposition?()
+    legendOpenedAt = now
+    legend = true
+    Sfx.shared.play(.slide, gain: 0.16)
+  }
+
+  func closeLegend() {
+    guard legend else { return }
+    legendClosedAt = now
+    legend = false
+    Sfx.shared.play(.slide, gain: 0.12)
+  }
+
+  func toggleLegend() { legend ? closeLegend() : openLegend() }
 
   // --- as above -------------------------------------------------------
 

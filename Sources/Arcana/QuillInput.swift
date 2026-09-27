@@ -101,7 +101,7 @@ struct QuillField: NSViewRepresentable {
       // V key is known by its place, whatever the keyboard's letters
       let paste =
         e.modifierFlags.contains(.command) && !g.holding && g.phase == .invocation
-        && !g.keeping.open
+        && !g.covered
         && (e.keyCode == 9 || e.charactersIgnoringModifiers?.lowercased() == "v")
       guard paste || QuillTextView.owns(e, in: g) else { return e }
       tv.claim()
@@ -137,7 +137,7 @@ final class QuillTextView: NSTextView {
   /// held the pen takes nothing, but the keys that write are still its own,
   /// so they are simply silent.
   static func owns(_ e: NSEvent, in g: Game) -> Bool {
-    guard g.phase == .invocation, g.inspecting == nil, !g.keeping.open else { return false }
+    guard g.phase == .invocation, g.inspecting == nil, !g.covered else { return false }
     let q = g.quill
     if e.type == .keyUp { return q.held.contains(e.keyCode) }
     guard e.type == .keyDown else { return false }
@@ -203,7 +203,7 @@ final class QuillTextView: NSTextView {
   override func hitTest(_ point: NSPoint) -> NSView? { nil }
   override var canBecomeKeyView: Bool { false }
   override var acceptsFirstResponder: Bool {
-    game?.phase == .invocation && game?.keeping.open == false
+    game?.phase == .invocation && game?.covered == false
   }
   override func menu(for event: NSEvent) -> NSMenu? { nil }
   /// A click may take the keys' focus while a key is still down; a space
@@ -292,8 +292,8 @@ final class QuillTextView: NSTextView {
   }
 
   override func keyDown(with e: NSEvent) {
-    // behind the moon's door nothing is written
-    guard let g = game, g.phase == .invocation, !g.keeping.open else { return }
+    // behind the moon's door, or the keys, nothing is written
+    guard let g = game, g.phase == .invocation, !g.covered else { return }
     g.quill.held.insert(e.keyCode)
     // while the question is held, the pen takes nothing
     if g.holding { return }
@@ -314,9 +314,9 @@ final class QuillTextView: NSTextView {
       spaceTask?.cancel()
       spaceTask = Task { @MainActor [weak self] in
         try? await Task.sleep(nanoseconds: UInt64(QuillTextView.spaceHold * 1e9))
-        // a space still under the finger as the moon's door opens asks nothing
+        // a space still under the finger as the moon's door or the keys open asks nothing
         guard let self, !Task.isCancelled, self.spaceDown, let g = self.game, let L = self.layout,
-          !g.keeping.open
+          !g.covered
         else { return }
         self.spaceHeld = true
         g.pressHold(L, by: .key)
@@ -376,12 +376,12 @@ final class QuillTextView: NSTextView {
   /// The pen takes no ink while the question is held.
   override func shouldChangeText(in affectedCharRange: NSRange, replacementString: String?) -> Bool
   {
-    guard let g = game, g.phase == .invocation, !g.holding, !g.keeping.open else { return false }
+    guard let g = game, g.phase == .invocation, !g.holding, !g.covered else { return false }
     return super.shouldChangeText(in: affectedCharRange, replacementString: replacementString)
   }
 
   override func insertText(_ raw: Any, replacementRange: NSRange) {
-    guard let g = game, !g.holding, !g.keeping.open else { return }
+    guard let g = game, !g.holding, !g.covered else { return }
     let s = (raw as? NSAttributedString)?.string ?? (raw as? String) ?? ""
     let committed = committedText()
     let clean = Quill.clean(s, after: committed)
@@ -396,7 +396,7 @@ final class QuillTextView: NSTextView {
   }
 
   override func setMarkedText(_ s: Any, selectedRange: NSRange, replacementRange: NSRange) {
-    guard game?.holding == false, game?.keeping.open == false else { return }
+    guard game?.holding == false, game?.covered == false else { return }
     inEdit = true
     super.setMarkedText(s, selectedRange: selectedRange, replacementRange: replacementRange)
     inEdit = false

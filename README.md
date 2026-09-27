@@ -70,6 +70,7 @@ moon is back where it was, the question you asked comes back beneath it.
 | `⌘⌫`, the moon open | lets the kept reading on the table go, for good |
 | `esc` | let go / take back what you wrote / close the card / start over / back to tonight, as do `↓` and the moon itself |
 | `m` | sound on/off. Before the ask it is a letter; the bowl, top right, always works |
+| `?` or `⌘/`, or the key, top left | the keys: the few the room has, on one page. `esc` or a click closes them. Before the ask `?` is a letter; `⌘/`, which is Help ▸ The Keys, and the key always work |
 
 Cards land reversed about 42% of the time; the art turns with them, an oxblood
 diamond appears under the title, and the card's bowl sounds an octave lower in
@@ -78,7 +79,7 @@ a darker voice.
 With Reduce Motion on, the hold is short, cards appear already written, and the
 sky is still. It still answers its cards, in a moment and by fading; the wheel
 does not turn, the turned wheel fades in over it. A kept reading opens already
-remembered.
+remembered, and the keys fade in whole.
 
 ### What the moon keeps
 
@@ -124,6 +125,7 @@ reading.
 | `Sources/Arcana/SkyRenderer.swift` | the near sky on the GPU: each frame a short list of soft shapes — discs, glows, rings, the charge's arc, the glints' fine arms of light — drawn by one small Metal shader on a display link of its own; the shot tool gets the same frame as a still |
 | `Sources/Arcana/Answers.swift` | as above: the four cards the sky already holds, and how it answers each — the lights it lays over itself for the Moon and the Sun, and the wheel's turn, all carried by Core Animation; the stars are the near sky's own glints, held |
 | `Sources/Arcana/Keeping.swift` | what the moon keeps: each reading returned, in one small file on this Mac; the moon as its door, the kept reading laid on the table as the return left it, the return run backwards to remember it, and a question brought back a moon later |
+| `Sources/Arcana/Legend.swift` | the keys: the room's few keys on one page, each drawn by the pen, and the old key in the corner that opens them |
 | `Sources/Arcana/Moon.swift` | tonight's moon phase, reckoned from a known new moon — or any night's — and its face: the near side's seas, walled plains and rayed craters where they really lie, a day moon: pearl where the sun is on it, the seas a lilac veil of sky, the rest a ghost of the disc — painted once per phase, pixel by pixel, and for the nights a kept reading may turn to, painted ahead, away from the main thread |
 | `Sources/Arcana/Sfx.swift` | singing bowls, chimes, the swell, a drone that breathes with the sky, and the hand sounds — synthesised off the main thread at launch, played through two rooms |
 | `Assets/arcana-logo.png` | the compass/eclipse mark used for the macOS app icon |
@@ -181,7 +183,9 @@ about a third of a core while the hand moves, where the old fan took a quarter
 — and drops no frames.
 Idle, the app sits around 9–10% of one core — less than the 11–12% it took
 when SwiftUI drew the sky at a third of the rate — and less again with the
-moon's door open, where the title's light rests.
+moon's door open, where the title's light rests. The keys are still: while
+they are open nothing on the table beneath them moves, and the room idles
+lower under them than without them.
 
 ### Reviewing the look without a display
 
@@ -192,7 +196,8 @@ or when the screen is not available. Name some to render only those:
 `./rebuild-shots.sh 35 37` renders the Moon and the Sun. Shots 44 to 55 are
 what the moon keeps; the shot tool never reads your kept readings, it lays out
 readings of its own. Shots 56 to 61 are the full deck: the ribbon, the suits on
-the table and the altar, a return, and every card of the four suits.
+the table and the altar, a return, and every card of the four suits. Shots 62
+and 63 are the keys, and the keys in the smallest window.
 
 ### Notes
 

@@ -419,10 +419,10 @@ private struct NearSky: View {
     let lively =
       (game.holding && game.phase == .invocation) || game.chargeMoving || game.skyQuick
     // a still sky (Reduce Motion) is drawn again as a star comes out or is
-    // given back, and as the moon's door opens or closes
+    // given back, and as the moon's door or the keys open or close
     let _ =
       reduceMotion
-      ? (game.stirring.contains(.star), game.answers.map(game.sunk), game.keeping.open)
+      ? (game.stirring.contains(.star), game.answers.map(game.sunk), game.covered)
       : (false, [], false)
 
     if still {
@@ -450,14 +450,19 @@ private struct NearSky: View {
       asking
       ? (reduceMotion ? 1 : max(ramp(now - game.ringFrom, 0, 0.6), min(1, charge * 4)))
       : min(1, charge * 1.5)
-    // the ring is the ask's: it goes out while the moon's door is open, and
-    // comes back with the room, however the door was closed
+    // the ring is the ask's: it goes out while the moon's door or the keys
+    // are open, and comes back with the room, however they were closed
     if asking {
       let k = game.keeping
       if k.open {
         ring *= reduceMotion ? 0 : 1 - ramp(now - k.openedAt, 0, 0.45)
       } else if !reduceMotion {
         ring *= ramp(now - k.closedAt, 0.5, 1.1)
+      }
+      if game.legend {
+        ring *= reduceMotion ? 0 : 1 - ramp(now - game.legendOpenedAt, 0, 0.25)
+      } else if !reduceMotion {
+        ring *= ramp(now - game.legendClosedAt, 0.2, 0.7)
       }
     }
     // a written question, given letter by letter while it is held
