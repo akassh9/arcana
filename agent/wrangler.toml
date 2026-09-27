@@ -1,0 +1,4 @@
+# The reading agents fetch (worker.js). Publish with ./deploy.sh.
+name = "arcana"
+main = "worker.js"
+compatibility_date = "2026-09-01"

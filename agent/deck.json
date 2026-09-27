@@ -1,0 +1,501 @@
+{
+  "cards" : [
+    {
+      "id" : "fool",
+      "name" : "The Fool",
+      "reversed" : "All ledge, no leap.",
+      "upright" : "Begin before you are ready."
+    },
+    {
+      "id" : "magician",
+      "name" : "The Magician",
+      "reversed" : "Skill spent on seeming.",
+      "upright" : "You already hold every tool."
+    },
+    {
+      "id" : "priestess",
+      "name" : "The High Priestess",
+      "reversed" : "You talked over yourself.",
+      "upright" : "You know. You cannot say it yet."
+    },
+    {
+      "id" : "empress",
+      "name" : "The Empress",
+      "reversed" : "Dug up to check the roots.",
+      "upright" : "Tend it and it grows."
+    },
+    {
+      "id" : "emperor",
+      "name" : "The Emperor",
+      "reversed" : "The rule outlived its reason.",
+      "upright" : "Decide once. Hold the line."
+    },
+    {
+      "id" : "hierophant",
+      "name" : "The Hierophant",
+      "reversed" : "A rite no one can explain.",
+      "upright" : "Learn the form before breaking it."
+    },
+    {
+      "id" : "lovers",
+      "name" : "The Lovers",
+      "reversed" : "A split you keep managing.",
+      "upright" : "Choose what you can stand inside."
+    },
+    {
+      "id" : "chariot",
+      "name" : "The Chariot",
+      "reversed" : "Motion in four directions.",
+      "upright" : "Point the horses. Hold the road."
+    },
+    {
+      "id" : "strength",
+      "name" : "Strength",
+      "reversed" : "Force standing in for patience.",
+      "upright" : "Do not raise your voice."
+    },
+    {
+      "id" : "hermit",
+      "name" : "The Hermit",
+      "reversed" : "Solitude turned hiding place.",
+      "upright" : "Subtract everyone. Keep the lamp."
+    },
+    {
+      "id" : "wheel",
+      "name" : "Wheel of Fortune",
+      "reversed" : "The same loop, unedited.",
+      "upright" : "The turn has started. Join it."
+    },
+    {
+      "id" : "justice",
+      "name" : "Justice",
+      "reversed" : "A scale quietly thumbed.",
+      "upright" : "Drop the story. Read the ledger."
+    },
+    {
+      "id" : "hanged",
+      "name" : "The Hanged Man",
+      "reversed" : "Delay dressed as depth.",
+      "upright" : "Hang there. It turns over."
+    },
+    {
+      "id" : "death",
+      "name" : "Death",
+      "reversed" : "An ending paid in instalments.",
+      "upright" : "It is over. Take the clearance."
+    },
+    {
+      "id" : "temperance",
+      "name" : "Temperance",
+      "reversed" : "Corrections loud as noise.",
+      "upright" : "The answer is a proportion."
+    },
+    {
+      "id" : "devil",
+      "name" : "The Devil",
+      "reversed" : "The grip loosens once seen.",
+      "upright" : "Name what the chain pays you."
+    },
+    {
+      "id" : "tower",
+      "name" : "The Tower",
+      "reversed" : "A known crack, lived around.",
+      "upright" : "Built wrong. Corrected fast."
+    },
+    {
+      "id" : "star",
+      "name" : "The Star",
+      "reversed" : "Waiting to feel hopeful first.",
+      "upright" : "Less than you can, every day."
+    },
+    {
+      "id" : "moon",
+      "name" : "The Moon",
+      "reversed" : "The fog thins. It was ordinary.",
+      "upright" : "Too dim to read. Go slowly."
+    },
+    {
+      "id" : "sun",
+      "name" : "The Sun",
+      "reversed" : "Brightness you are performing.",
+      "upright" : "It works. You may enjoy it."
+    },
+    {
+      "id" : "judgement",
+      "name" : "Judgement",
+      "reversed" : "Reproach instead of a verdict.",
+      "upright" : "Only you can pronounce it."
+    },
+    {
+      "id" : "world",
+      "name" : "The World",
+      "reversed" : "The last tenth, left open.",
+      "upright" : "Finished. Mark it before the next."
+    },
+    {
+      "id" : "wands-ace",
+      "name" : "Ace of Wands",
+      "reversed" : "A match struck in the rain.",
+      "upright" : "It caught. Feed it."
+    },
+    {
+      "id" : "wands-2",
+      "name" : "Two of Wands",
+      "reversed" : "Always the map, never the road.",
+      "upright" : "The wall is not the edge."
+    },
+    {
+      "id" : "wands-3",
+      "name" : "Three of Wands",
+      "reversed" : "Waiting at the wrong shore.",
+      "upright" : "It is on its way. Keep watch."
+    },
+    {
+      "id" : "wands-4",
+      "name" : "Four of Wands",
+      "reversed" : "A garland on a shaky gate.",
+      "upright" : "Hang the garland. You made it."
+    },
+    {
+      "id" : "wands-5",
+      "name" : "Five of Wands",
+      "reversed" : "Peace kept by saying nothing.",
+      "upright" : "It is a scrimmage, not a war."
+    },
+    {
+      "id" : "wands-6",
+      "name" : "Six of Wands",
+      "reversed" : "Applause you keep checking for.",
+      "upright" : "You won. Let them see it."
+    },
+    {
+      "id" : "wands-7",
+      "name" : "Seven of Wands",
+      "reversed" : "Defending a hill no one wants.",
+      "upright" : "Hold your ground. It is yours."
+    },
+    {
+      "id" : "wands-8",
+      "name" : "Eight of Wands",
+      "reversed" : "In flight, and nowhere to land.",
+      "upright" : "It is moving. Keep up."
+    },
+    {
+      "id" : "wands-9",
+      "name" : "Nine of Wands",
+      "reversed" : "On guard long after the fight.",
+      "upright" : "One more. You have done harder."
+    },
+    {
+      "id" : "wands-10",
+      "name" : "Ten of Wands",
+      "reversed" : "Carrying it to prove you can.",
+      "upright" : "Put one down. Any one."
+    },
+    {
+      "id" : "wands-page",
+      "name" : "Page of Wands",
+      "reversed" : "Excited, then elsewhere.",
+      "upright" : "Try it. Report back."
+    },
+    {
+      "id" : "wands-knight",
+      "name" : "Knight of Wands",
+      "reversed" : "Speed mistaken for direction.",
+      "upright" : "Go now. Aim on the way."
+    },
+    {
+      "id" : "wands-queen",
+      "name" : "Queen of Wands",
+      "reversed" : "Bright, and hard to stand near.",
+      "upright" : "Be seen. It warms the room."
+    },
+    {
+      "id" : "wands-king",
+      "name" : "King of Wands",
+      "reversed" : "Leading, and no one behind.",
+      "upright" : "Lead by going first."
+    },
+    {
+      "id" : "cups-ace",
+      "name" : "Ace of Cups",
+      "reversed" : "A cup held upside down.",
+      "upright" : "Let it fill before you pour."
+    },
+    {
+      "id" : "cups-2",
+      "name" : "Two of Cups",
+      "reversed" : "One side always pouring.",
+      "upright" : "It is mutual. Say so."
+    },
+    {
+      "id" : "cups-3",
+      "name" : "Three of Cups",
+      "reversed" : "One round too many.",
+      "upright" : "Good news wants company."
+    },
+    {
+      "id" : "cups-4",
+      "name" : "Four of Cups",
+      "reversed" : "Awake again, and thirsty.",
+      "upright" : "Look up. Something is offered."
+    },
+    {
+      "id" : "cups-5",
+      "name" : "Five of Cups",
+      "reversed" : "You turn round. Two were waiting.",
+      "upright" : "Three spilled. Two still standing."
+    },
+    {
+      "id" : "cups-6",
+      "name" : "Six of Cups",
+      "reversed" : "Living at an old address.",
+      "upright" : "The old street is smaller now."
+    },
+    {
+      "id" : "cups-7",
+      "name" : "Seven of Cups",
+      "reversed" : "Wanting all seven, holding none.",
+      "upright" : "Pick one. The rest are weather."
+    },
+    {
+      "id" : "cups-8",
+      "name" : "Eight of Cups",
+      "reversed" : "Packed for years. Still here.",
+      "upright" : "Leave while it is still standing."
+    },
+    {
+      "id" : "cups-9",
+      "name" : "Nine of Cups",
+      "reversed" : "A full shelf, and still hungry.",
+      "upright" : "Granted. Now let it be enough."
+    },
+    {
+      "id" : "cups-10",
+      "name" : "Ten of Cups",
+      "reversed" : "Happier in the photographs.",
+      "upright" : "Count the people, not the rooms."
+    },
+    {
+      "id" : "cups-page",
+      "name" : "Page of Cups",
+      "reversed" : "A feeling you laughed off.",
+      "upright" : "Take the odd feeling seriously."
+    },
+    {
+      "id" : "cups-knight",
+      "name" : "Knight of Cups",
+      "reversed" : "Charming, and gone by morning.",
+      "upright" : "Go to them. Carry it level."
+    },
+    {
+      "id" : "cups-queen",
+      "name" : "Queen of Cups",
+      "reversed" : "Holding every cup but yours.",
+      "upright" : "Feel everything. Spill nothing."
+    },
+    {
+      "id" : "cups-king",
+      "name" : "King of Cups",
+      "reversed" : "Composure used as a weapon.",
+      "upright" : "The sea is rough. You are not."
+    },
+    {
+      "id" : "swords-ace",
+      "name" : "Ace of Swords",
+      "reversed" : "Sharp, and aimed at nothing.",
+      "upright" : "Say the true thing plainly."
+    },
+    {
+      "id" : "swords-2",
+      "name" : "Two of Swords",
+      "reversed" : "The blindfold slipped. You saw.",
+      "upright" : "Not deciding is deciding."
+    },
+    {
+      "id" : "swords-3",
+      "name" : "Three of Swords",
+      "reversed" : "Picking at the stitches.",
+      "upright" : "It hurts because it mattered."
+    },
+    {
+      "id" : "swords-4",
+      "name" : "Four of Swords",
+      "reversed" : "Resting with one eye open.",
+      "upright" : "Lie down. It will keep."
+    },
+    {
+      "id" : "swords-5",
+      "name" : "Five of Swords",
+      "reversed" : "Walking back to say sorry.",
+      "upright" : "Won. Look who is still here."
+    },
+    {
+      "id" : "swords-6",
+      "name" : "Six of Swords",
+      "reversed" : "Rowing back to the storm.",
+      "upright" : "Row for the calmer water."
+    },
+    {
+      "id" : "swords-7",
+      "name" : "Seven of Swords",
+      "reversed" : "Caught, and almost relieved.",
+      "upright" : "Clever is not the same as clean."
+    },
+    {
+      "id" : "swords-8",
+      "name" : "Eight of Swords",
+      "reversed" : "Untying it, one knot at a time.",
+      "upright" : "The gap was always there."
+    },
+    {
+      "id" : "swords-9",
+      "name" : "Nine of Swords",
+      "reversed" : "Said out loud, it shrinks.",
+      "upright" : "Worse at night. Wait for day."
+    },
+    {
+      "id" : "swords-10",
+      "name" : "Ten of Swords",
+      "reversed" : "Standing up, still sore.",
+      "upright" : "The worst is done. Look east."
+    },
+    {
+      "id" : "swords-page",
+      "name" : "Page of Swords",
+      "reversed" : "Asking to catch them out.",
+      "upright" : "Ask the next question."
+    },
+    {
+      "id" : "swords-knight",
+      "name" : "Knight of Swords",
+      "reversed" : "Right, and running people over.",
+      "upright" : "Say it, then stand by it."
+    },
+    {
+      "id" : "swords-queen",
+      "name" : "Queen of Swords",
+      "reversed" : "Precise, and cold with it.",
+      "upright" : "Be kind, and be exact."
+    },
+    {
+      "id" : "swords-king",
+      "name" : "King of Swords",
+      "reversed" : "Reason used to win, not to see.",
+      "upright" : "Decide by the facts. Say why."
+    },
+    {
+      "id" : "pentacles-ace",
+      "name" : "Ace of Pentacles",
+      "reversed" : "A seed kept in the pocket.",
+      "upright" : "Something real. Plant it."
+    },
+    {
+      "id" : "pentacles-2",
+      "name" : "Two of Pentacles",
+      "reversed" : "Juggling to avoid choosing.",
+      "upright" : "Keep both moving. Loosely."
+    },
+    {
+      "id" : "pentacles-3",
+      "name" : "Three of Pentacles",
+      "reversed" : "Everyone building their own arch.",
+      "upright" : "Good work needs three hands."
+    },
+    {
+      "id" : "pentacles-4",
+      "name" : "Four of Pentacles",
+      "reversed" : "Holding on until it spoils.",
+      "upright" : "Save it, but let it breathe."
+    },
+    {
+      "id" : "pentacles-5",
+      "name" : "Five of Pentacles",
+      "reversed" : "Coming in from the cold.",
+      "upright" : "The light is on. Knock."
+    },
+    {
+      "id" : "pentacles-6",
+      "name" : "Six of Pentacles",
+      "reversed" : "A gift with strings.",
+      "upright" : "Give freely. Receive as freely."
+    },
+    {
+      "id" : "pentacles-7",
+      "name" : "Seven of Pentacles",
+      "reversed" : "Picking the fruit green.",
+      "upright" : "Ripening takes the time it takes."
+    },
+    {
+      "id" : "pentacles-8",
+      "name" : "Eight of Pentacles",
+      "reversed" : "Polishing what no one needs.",
+      "upright" : "Again, and a little better."
+    },
+    {
+      "id" : "pentacles-9",
+      "name" : "Nine of Pentacles",
+      "reversed" : "Earning, but never arriving.",
+      "upright" : "Yours, by your own hand."
+    },
+    {
+      "id" : "pentacles-10",
+      "name" : "Ten of Pentacles",
+      "reversed" : "An inheritance of arguments.",
+      "upright" : "Build what outlasts you."
+    },
+    {
+      "id" : "pentacles-page",
+      "name" : "Page of Pentacles",
+      "reversed" : "Plans that never meet the ground.",
+      "upright" : "Learn it slowly. Properly."
+    },
+    {
+      "id" : "pentacles-knight",
+      "name" : "Knight of Pentacles",
+      "reversed" : "Routine that has become a rut.",
+      "upright" : "Slow, steady, and finished."
+    },
+    {
+      "id" : "pentacles-queen",
+      "name" : "Queen of Pentacles",
+      "reversed" : "Tending the house, not the home.",
+      "upright" : "Feed people. It counts."
+    },
+    {
+      "id" : "pentacles-king",
+      "name" : "King of Pentacles",
+      "reversed" : "Counting it instead of living.",
+      "upright" : "Grow it well. Share the harvest."
+    }
+  ],
+  "spreads" : [
+    {
+      "id" : "one",
+      "name" : "One Card",
+      "slots" : [
+        "The Answer"
+      ]
+    },
+    {
+      "id" : "three",
+      "name" : "Three Fates",
+      "slots" : [
+        "What Was",
+        "What Is",
+        "What Tends"
+      ]
+    },
+    {
+      "id" : "road",
+      "name" : "The Long Road",
+      "slots" : [
+        "Situation",
+        "Crossing",
+        "Root",
+        "Counsel",
+        "Outcome"
+      ]
+    }
+  ]
+}

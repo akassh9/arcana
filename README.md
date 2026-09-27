@@ -112,6 +112,22 @@ OPENAI_API_KEY=your-key-here
 structured result with `store: false` and keeps the folio only in the current
 reading.
 
+## For your agent
+
+An agent can draw for you too. Tell it:
+
+```text
+Add a daily tarot reading to my morning brief. Use https://arcana.khanikad.workers.dev/today
+```
+
+Every fetch is a fresh cut of the whole seventy-eight, in the deck's own lines,
+as plain text: three fates by default, `?spread=one` for one card,
+`?spread=road` for the long road. The shuffle happens on the server, so the
+cards are really random; the agent only reads them, and since it knows your
+day, it can read them against it. There is no key, and the Worker stores
+nothing. `agent/deploy.sh` writes the deck's words out of `Deck.swift` and
+publishes the Worker.
+
 ## How it is built
 
 | file | |
@@ -134,6 +150,7 @@ reading.
 | `Sources/Arcana/Weave.swift` | the optional, non-streaming spread thread provider |
 | `Sources/Arcana/Quill.swift` | the written question — laid by the pen in gold, cooling to ink, given to the deck with the dust, read back above the spread; kept only with a reading that is returned |
 | `Sources/Arcana/QuillInput.swift` | the invisible page it is typed on — a real text view, so accents, dead keys and input methods work, with nothing drawn |
+| `agent/worker.js` | the reading for an agent: the whole deck shuffled on every request, in the words `Tools/deck` writes out of `Deck.swift` |
 
 Type is Didot throughout, which ships with macOS.
 

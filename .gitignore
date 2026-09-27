@@ -12,3 +12,6 @@ _original/Arcana.app/
 .swiftpm/
 *.xcuserstate
 .claude/settings.local.json
+
+# wrangler dev's local state
+.wrangler/
