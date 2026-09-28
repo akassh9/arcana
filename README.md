@@ -5,6 +5,8 @@ seventy-eight cards are drawn by code and every sound is synthesised at launch.
 
 ![A Three Fates reading in Arcana: the written question set above the spread, the Six of Cups, the Star and the Six of Swords, and the reading spoken as verse](docs/arcana.png)
 
+**[Download Arcana](https://github.com/akassh9/arcana/releases/latest)** for Apple silicon Macs, macOS 14 or later. Or build it:
+
 ```bash
 ./build.sh && open build/Arcana.app
 ```
