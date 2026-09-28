@@ -104,7 +104,9 @@ question stays over the blank cards until they turn. It never streams or opens a
 chat. The request sends only the selected spread and Arcana's authored card
 language. A question you write is never part of that request.
 
-To enable it locally, put an OpenAI key in `.env.local`:
+To enable it, paste an OpenAI key into Arcana ▸ Settings… (`⌘,`). It is kept
+in your Keychain, and from the next reading the thread is offered. Building
+from source, a key in `.env.local` works too, and comes first:
 
 ```text
 OPENAI_API_KEY=your-key-here
@@ -150,6 +152,7 @@ publishes the Worker.
 | `Sources/Arcana/Game.swift` | the beats — the held question, the draw, the writing, the recital, the return — plus all stage geometry |
 | `Sources/Arcana/RootView.swift` | the table itself: one absolutely-positioned stage, the thread, the verse, the altar |
 | `Sources/Arcana/Weave.swift` | the optional, non-streaming spread thread provider |
+| `Sources/Arcana/Settings.swift` | Settings, `⌘,`: the one thing to set, an OpenAI key for the thread, kept in the Keychain and only ever read away from the room |
 | `Sources/Arcana/Quill.swift` | the written question — laid by the pen in gold, cooling to ink, given to the deck with the dust, read back above the spread; kept only with a reading that is returned |
 | `Sources/Arcana/QuillInput.swift` | the invisible page it is typed on — a real text view, so accents, dead keys and input methods work, with nothing drawn |
 | `agent/worker.js` | the reading for an agent: the whole deck shuffled on every request, in the words `Tools/deck` writes out of `Deck.swift` |

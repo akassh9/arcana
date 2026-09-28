@@ -21,5 +21,11 @@ struct ArcanaApp: App {
           .keyboardShortcut("/", modifiers: .command)
       }
     }
+
+    // Arcana ▸ Settings…, ⌘, — the OpenAI key for find the thread
+    Settings {
+      SettingsView()
+    }
+    .windowResizability(.contentSize)
   }
 }

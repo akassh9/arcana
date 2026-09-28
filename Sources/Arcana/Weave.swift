@@ -160,8 +160,19 @@ final class WeaveService {
   }
 }
 
+/// The key to ask with: one from the environment or from a `.env.local`
+/// beside a build from source, or else the one pasted into Settings.
+@MainActor
 private enum APIKeyStore {
   static func value() -> String? {
+    if let key = local() { return key }
+    // read from the Keychain the first time it is wanted, away from the
+    // room; until it has been, there is none
+    OpenAIKey.warm()
+    return OpenAIKey.kept
+  }
+
+  private static func local() -> String? {
     if let value = ProcessInfo.processInfo.environment["OPENAI_API_KEY"], !value.isEmpty {
       return value
     }
