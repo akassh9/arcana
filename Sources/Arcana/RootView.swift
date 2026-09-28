@@ -1319,10 +1319,13 @@ private struct ThreadPanel: View {
       Caps(
         text: "the thread stayed quiet", size: 9.5, tracking: 3.2,
         color: Palette.text.opacity(0.52))
-      Button("try again") { game.findThread() }
-        .buttonStyle(.plain)
-        .font(.italic(13))
-        .foregroundStyle(Palette.goldInk)
+      // not when OpenAI has refused the key: trying again would only fail
+      if game.threadable {
+        Button("try again") { game.findThread() }
+          .buttonStyle(.plain)
+          .font(.italic(13))
+          .foregroundStyle(Palette.goldInk)
+      }
     }
   }
 

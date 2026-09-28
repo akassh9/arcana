@@ -16,23 +16,65 @@ final class WeaveService {
 
   enum Failure: Error {
     case missingKey
+    /// OpenAI will not take the key: it is not offered again.
+    case refused
     case request
     case response
     case invalidResult
   }
 
-  private let endpoint = URL(string: "https://api.openai.com/v1/responses")!
+  /// OpenAI's API; a test points it elsewhere.
+  static var api = URL(string: "https://api.openai.com/v1")!
+  private static var model: String { ProcessInfo.processInfo.environment["ARCANA_AI_MODEL"] ?? "gpt-5" }
 
-  /// There is a key to ask with. Without one the thread is not offered at
-  /// all, rather than offered and always quiet.
-  static var ready: Bool { APIKeyStore.value() != nil }
+  /// There is a key to ask with, and OpenAI has not refused it. Without one
+  /// the thread is not offered at all, rather than offered and always quiet.
+  static var ready: Bool { APIKeyStore.value().map(OpenAIKey.usable) ?? false }
+
+  /// Whether OpenAI will take this key for the thread. It is asked for the
+  /// model the thread is written by, which costs nothing and sends nothing
+  /// but the key. Nil when the answer says neither.
+  static func check(_ key: String) async -> OpenAIKey.Verdict? {
+    var request = URLRequest(url: api.appendingPathComponent("models").appendingPathComponent(model))
+    request.timeoutInterval = 15
+    request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+    let verdict: OpenAIKey.Verdict?
+    do {
+      let (data, response) = try await URLSession.shared.data(for: request)
+      guard let http = response as? HTTPURLResponse else { return nil }
+      verdict = said(http.statusCode, data, thread: false)
+    } catch {
+      if Task.isCancelled { return nil }
+      verdict = .unreachable
+    }
+    if let verdict { OpenAIKey.heard(verdict, of: key) }
+    return verdict
+  }
+
+  /// What an answer from OpenAI says of the key it was asked with, if it
+  /// says anything: a wrong key, a model out of its reach, no credit left.
+  /// A key barred from writing the thread is refused only when the thread
+  /// itself is asked for — a key may be barred from reading the models and
+  /// still write.
+  private static func said(_ status: Int, _ data: Data, thread: Bool) -> OpenAIKey.Verdict? {
+    let error = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? [String: Any]
+    let code = error?["code"] as? String ?? error?["type"] as? String
+    switch status {
+    case 200..<300: return .ready
+    case 401: return .refused
+    case 403: return thread ? .refused : nil
+    case 404 where code == "model_not_found": return .refused
+    case 429 where code == "insufficient_quota": return .noCredit
+    default: return nil
+    }
+  }
 
   // The reader's written question is never part of this request.
   func make(spread: Spread, draws: [Draw]) async throws -> WeaveResult {
     guard let key = APIKeyStore.value() else { throw Failure.missingKey }
 
     let payload: [String: Any] = [
-      "model": ProcessInfo.processInfo.environment["ARCANA_AI_MODEL"] ?? "gpt-5",
+      "model": Self.model,
       "store": false,
       "input": [
         [
@@ -80,7 +122,7 @@ final class WeaveService {
       ]
     ]
 
-    var request = URLRequest(url: endpoint)
+    var request = URLRequest(url: Self.api.appendingPathComponent("responses"))
     request.httpMethod = "POST"
     request.timeoutInterval = 45
     request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
@@ -97,7 +139,14 @@ final class WeaveService {
       throw Failure.request
     }
 
-    guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+    guard let http = response as? HTTPURLResponse else { throw Failure.request }
+    guard (200..<300).contains(http.statusCode) else {
+      // a key OpenAI will not take, or that has no credit left, is heard,
+      // and the thread is not offered with it again
+      if let verdict = Self.said(http.statusCode, data, thread: true) {
+        OpenAIKey.heard(verdict, of: key)
+        throw Failure.refused
+      }
       throw Failure.request
     }
 
@@ -115,6 +164,7 @@ final class WeaveService {
       throw Failure.invalidResult
     }
 
+    OpenAIKey.worked(key)
     return WeaveResult(thread: thread, question: question)
   }
 

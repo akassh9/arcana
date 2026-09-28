@@ -105,8 +105,12 @@ chat. The request sends only the selected spread and Arcana's authored card
 language. A question you write is never part of that request.
 
 To enable it, paste an OpenAI key into Arcana ▸ Settings… (`⌘,`). It is kept
-in your Keychain, and from the next reading the thread is offered. Building
-from source, a key in `.env.local` works too, and comes first:
+in your Keychain, and from the next reading the thread is offered. Settings
+asks OpenAI whether it will take the key — a free request that sends nothing
+but the key — and says so under the field. A key OpenAI refuses, there or when
+a thread is asked for, is not offered again until it changes; one out of
+credit rests until the next launch. Building from source, a key in
+`.env.local` works too, and comes first:
 
 ```text
 OPENAI_API_KEY=your-key-here
@@ -152,7 +156,7 @@ publishes the Worker.
 | `Sources/Arcana/Game.swift` | the beats — the held question, the draw, the writing, the recital, the return — plus all stage geometry |
 | `Sources/Arcana/RootView.swift` | the table itself: one absolutely-positioned stage, the thread, the verse, the altar |
 | `Sources/Arcana/Weave.swift` | the optional, non-streaming spread thread provider |
-| `Sources/Arcana/Settings.swift` | Settings, `⌘,`: the one thing to set, an OpenAI key for the thread, kept in the Keychain and only ever read away from the room |
+| `Sources/Arcana/Settings.swift` | Settings, `⌘,`: the one thing to set, an OpenAI key for the thread, kept in the Keychain and only ever read away from the room; OpenAI is asked, for free, whether it will take it |
 | `Sources/Arcana/Quill.swift` | the written question — laid by the pen in gold, cooling to ink, given to the deck with the dust, read back above the spread; kept only with a reading that is returned |
 | `Sources/Arcana/QuillInput.swift` | the invisible page it is typed on — a real text view, so accents, dead keys and input methods work, with nothing drawn |
 | `agent/worker.js` | the reading for an agent: the whole deck shuffled on every request, in the words `Tools/deck` writes out of `Deck.swift` |

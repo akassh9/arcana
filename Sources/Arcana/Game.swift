@@ -710,6 +710,8 @@ final class Game {
         withAnimation(.easeOut(duration: 0.25)) {
           self.weaving = false
           self.weaveError = true
+          // a key OpenAI has refused is not offered again, nor tried again
+          self.threadable = WeaveService.ready
         }
         self.liven(for: 0.1)
         self.weaveTask = nil
