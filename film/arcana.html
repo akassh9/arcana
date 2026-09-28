@@ -1,0 +1,951 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>arcana — everyone's question</title>
+<style>
+  body{margin:0;background:#111;color:#ccc;font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px}
+  canvas#c{width:min(92vw,720px);height:auto;background:#000;box-shadow:0 0 0 1px #333}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  button{background:#222;color:#ddd;border:1px solid #444;padding:4px 10px;cursor:pointer;font:inherit}
+  input[type=range]{width:320px}
+</style>
+<canvas id="c" width="1080" height="1080"></canvas>
+<script src="core.js"></script>
+<script>
+'use strict';
+// ============================================================
+// ARCANA — a launch film. Every frame drawn on Canvas 2D.
+// ============================================================
+
+// ===================== BRIEF & BEAT SHEET =====================
+// Subject: everyone carries a question to some quiet place; the deck answers one, and the day sky answers them all.
+// Format: 1:1, short side 1080, drawn 12 fps, output 24 fps, 21.3 s.
+// Look: riso (the places: first light in cornflower, lilac, rose and apricot dots on pearl stock)
+//       cut against ink (the deck: the app's own cards, pen line on cotton stock, one gold).
+// Anchor: one gold light at the centre of the frame — each place's lamp or window, the hub of the
+//         wheel, the gold of every card in the riffle, the back's sun, which rises into the Star's
+//         heart; last, the light that passes across the name.
+// (beat sheet: see TIMELINE below)
+
+// ===================== PALETTES =====================
+// Riso inks chosen so that, at the coverage the plates use, they print the app's sky:
+// skyBlue #ccdbf5, lilac #e0d8f7, rose #fdddcc, dawn #ffe0b0 on pearl.
+const FIRST_LIGHT = makePalette({
+  paper: '#f6f1e7', paperBand: null, ink: '#2a2230', night: '#3b3357', chalk: '#f6f1e7', chalkDim: '#a79fc4',
+  guide: 'rgba(120,100,190,.45)',
+  fills: ['#7d9fe0', '#a896e2', '#ee9f98', '#f3b95e', '#c9a82f', '#8c7bc8'],
+  shade: '#5b4f8a', light: '#fdfaf2', blush: '#ee9f98',
+  accents: ['#c9a82f', '#9d8ae0', '#ec8f8a', '#6f96e0'],
+  inks: ['#6f97e0', '#9f8be0', '#ef9690', '#f4b454'],
+  gold: '#c9a82f', goldLit: '#ecce6e', goldDeep: '#8a6819', blood: '#8c2e25',
+  finish: 'riso',
+}, 'risoPop');
+// The deck: the app's Palette.swift — cotton stock, ink, gold leaf, oxblood.
+const CARD_STOCK = makePalette({
+  paper: '#f3ede0', paperBand: null, ink: '#15110e', night: '#3b3357', chalk: '#f3ede0', chalkDim: '#b3a98f',
+  guide: 'rgba(140,46,37,.35)',
+  fills: ['#c9a82f', '#ecce6e', '#8a6819', '#f3ede0'], shade: '#4d3a1f', light: '#fbf6ea', blush: '#8c2e25',
+  accents: ['#c9a82f', '#8c2e25', '#ecce6e', '#8a6819'],
+  inks: ['#15110e', '#c9a82f'],
+  gold: '#c9a82f', goldLit: '#ecce6e', goldDeep: '#8a6819', blood: '#8c2e25', sky: '#dfe3f2',
+  finish: 'ink',
+}, 'paperInk');
+usePalette(FIRST_LIGHT);
+
+// ===================== THE PEN (ported from the app's Ink.swift) =====================
+// The same seeded generator and the same bowed strokes, so each card is drawn
+// stroke for stroke as it is in the app. Marks are flattened to polylines so a
+// stroke can be laid down part way, the way the app writes a card.
+function seedHash(str) { let h = 2166136261 >>> 0; for (const b of new TextEncoder().encode(str)) { h = (h ^ b) >>> 0; h = Math.imul(h, 16777619) >>> 0; } return h; }
+class AppRng {
+  constructor(seed) { this.s = (seed >>> 0) || 1; }
+  next() { this.s = (this.s + 0x6D2B79F5) >>> 0; let t = this.s; t = Math.imul(t ^ (t >>> 15), t | 1) >>> 0; t = (t ^ ((t + (Math.imul(t ^ (t >>> 7), t | 61) >>> 0)) >>> 0)) >>> 0; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+  sym(a) { return (this.next() * 2 - 1) * a; }
+}
+// a path is a list of subpaths; each subpath is a list of [x, y] after flattening
+const CUBIC_STEPS = 14;
+function cubicPts(out, p0, c1, c2, p3) { for (let k = 1; k <= CUBIC_STEPS; k++) out.push(bez(p0, c1, c2, p3, k / CUBIC_STEPS)); }
+function smoothPts(pts, closed) {
+  const n = pts.length; if (n <= 2) return pts.slice();
+  const out = [pts[0]], last = closed ? n : n - 1;
+  for (let i = 0; i < last; i++) {
+    const p0 = pts[closed ? (i - 1 + n) % n : Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[closed ? (i + 1) % n : Math.min(i + 1, n - 1)], p3 = pts[closed ? (i + 2) % n : Math.min(i + 2, n - 1)];
+    cubicPts(out, p1, [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6], p2);
+  }
+  return out;
+}
+class Pen {
+  constructor(seed) { this.r = new AppRng(seed); this.marks = []; }
+  bowed(x1, y1, x2, y2, amp) {
+    const r = this.r, dx = x2 - x1, dy = y2 - y1, len = Math.max(Math.hypot(dx, dy), 1e-4), nx = -dy / len, ny = dx / len;
+    const o1 = r.sym(amp), o2 = r.sym(amp);
+    const a = [x1 + r.sym(amp * .4), y1 + r.sym(amp * .4)], b = [x2 + r.sym(amp * .4), y2 + r.sym(amp * .4)];
+    const out = [a]; cubicPts(out, a, [x1 + dx * .33 + nx * o1, y1 + dy * .33 + ny * o1], [x1 + dx * .66 + nx * o2, y1 + dy * .66 + ny * o2], b); return out;
+  }
+  add(pts, closed, stroke, width, fill) { this.marks.push({ pts, closed, stroke, width, fill }); }
+  line(x1, y1, x2, y2, w = 1.5, c = 'ink', amp = 1.1) { this.add(this.bowed(x1, y1, x2, y2, amp), false, c, w, null); }
+  ringPoints(cx, cy, rad, amp = 1.3, segs = 22, squash = 1) { const out = []; for (let i = 0; i < segs; i++) { const a = i / segs * TAU, rr = rad + this.r.sym(amp); out.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * squash]); } return out; }
+  ring(cx, cy, rad, w = 1.5, c = 'ink', amp = 1.3, segs = 22, squash = 1) { this.add(smoothPts(this.ringPoints(cx, cy, rad, amp, segs, squash), true), true, c, w, null); }
+  dot(cx, cy, rad, c = 'gold') { this.add(smoothPts(this.ringPoints(cx, cy, rad, .25, 14), true), true, c === 'gold' ? 'ink' : null, .8, c); }
+  sharp(pts, amp, closed) {
+    const r = this.r, v = pts.map(q => [q[0] + r.sym(amp), q[1] + r.sym(amp)]); if (!v.length) return [];
+    const out = [v[0]], last = closed ? v.length : v.length - 1;
+    for (let i = 0; i < last; i++) { const a = v[i], b = v[(i + 1) % v.length], dx = b[0] - a[0], dy = b[1] - a[1], len = Math.max(Math.hypot(dx, dy), 1e-4), nx = -dy / len, ny = dx / len; const o1 = r.sym(amp * .7), o2 = r.sym(amp * .7); cubicPts(out, a, [a[0] + dx * .33 + nx * o1, a[1] + dy * .33 + ny * o1], [a[0] + dx * .66 + nx * o2, a[1] + dy * .66 + ny * o2], b); }
+    return out;
+  }
+  poly(pts, w = 1.5, c = 'ink', amp = 1.1, closed = true) { this.add(this.sharp(pts, amp, closed), closed, c, w, null); }
+  fillPoly(pts, c = 'gold', amp = .8) { this.add(this.sharp(pts, amp, true), true, c === 'gold' ? 'ink' : null, .8, c); }
+  smooth(pts, closed = true, w = 1.5, c = 'ink') { this.add(smoothPts(pts, closed), closed, c, w, null); }
+  fillSmooth(pts, c = 'gold', outline = true) { this.add(smoothPts(pts, true), true, outline && c === 'gold' ? 'ink' : null, .8, c); }
+  fillChord(pts, c) { this.add(smoothPts(pts, false), true, c === 'gold' ? 'ink' : null, .8, c); }
+  fillSmoothPts(pts, c, outline = false) { this.add(smoothPts(pts, true), true, outline ? 'ink' : null, .8, c); }
+  diamondPts(cx, cy, rx, ry) { return [[cx, cy - ry], [cx + rx, cy], [cx, cy + ry], [cx - rx, cy]]; }
+  diamond(cx, cy, rx, ry, w = 1.1, c = 'accent', amp = 1) { this.poly(this.diamondPts(cx, cy, rx, ry ?? rx), w, c, amp); }
+  fillDiamond(cx, cy, rx, ry, c = 'accent') { this.fillPoly(this.diamondPts(cx, cy, rx, ry ?? rx), c, .6); }
+  rays(cx, cy, r0, r1, n, w = 1.5, offset = 0, c = 'ink') { for (let i = 0; i < n; i++) { const a = offset + i / n * TAU, wb = 1 + this.r.sym(.04); this.line(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0, cx + Math.cos(a) * r1 * wb, cy + Math.sin(a) * r1 * wb, w, c, .9); } }
+  hatch(x, y, wd, ht, gap = 5, angle = -.6, w = .75) {
+    const span = (Math.abs(wd) + Math.abs(ht)) * 1.4, dx = Math.cos(angle), dy = Math.sin(angle), cx = x + wd / 2, cy = y + ht / 2, count = Math.ceil(span / gap);
+    for (let i = Math.trunc(-count / 2); i < Math.trunc(count / 2); i++) {
+      const ox = cx - dy * i * gap, oy = cy + dx * i * gap; let t0 = -span, t1 = span, dead = false;
+      const clip = (pos, d, lo, hi) => { if (Math.abs(d) < 1e-6) { if (pos < lo || pos > hi) dead = true; return; } let a = (lo - pos) / d, b = (hi - pos) / d; if (a > b) [a, b] = [b, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, b); };
+      clip(ox, dx, x, x + wd); clip(oy, dy, y, y + ht); if (dead || t1 - t0 < 2) continue;
+      const j = this.r.sym(1.2); this.line(ox + dx * (t0 + 1), oy + dy * (t0 + 1), ox + dx * (t1 - 1) + j, oy + dy * (t1 - 1), w, 'ink', .5);
+    }
+  }
+  ticks(cx, cy, rad, len, n, w = .8) { for (let i = 0; i < n; i++) { const a = i / n * TAU; this.line(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, cx + Math.cos(a) * (rad + len), cy + Math.sin(a) * (rad + len), w, 'ink', .4); } }
+  ripples(width, y0, count = 4, gap = 9) { for (let i = 0; i < count; i++) { const y = y0 + i * gap, inset = 14 + i * 5, pts = []; for (let k = 0; k <= 8; k++) pts.push([inset + (width - inset * 2) * k / 8, y + Math.sin(k * 1.6 + i) * 1.8 + this.r.sym(.8)]); this.smooth(pts, false, 1.1); } }
+  eye(cx, cy, rx, ry) { this.fillPoly([[cx - rx, cy], [cx - rx * .45, cy - ry], [cx + rx * .45, cy - ry], [cx + rx, cy], [cx + rx * .45, cy + ry], [cx - rx * .45, cy + ry]], 'gold', .8); this.dot(cx, cy, ry * .52, 'ink'); }
+}
+
+// ===================== THE TWENTY-TWO (ported from CardArt.swift) =====================
+// Art space 186 x 248; the card 226 x 400, art centred at (113, 176).
+const ART_W = 186, ART_H = 248, CARD_W = 226, CARD_H = 400;
+const MAJORS = [
+  ['fool', 'O', 'The Fool', 'Leap Without Ledger'], ['magician', 'I', 'The Magician', 'As Above, So Below'],
+  ['priestess', 'II', 'The High Priestess', 'The Sealed Door'], ['empress', 'III', 'The Empress', 'Abundant Ground'],
+  ['emperor', 'IV', 'The Emperor', 'The Iron Seat'], ['hierophant', 'V', 'The Hierophant', 'The Old Order'],
+  ['lovers', 'VI', 'The Lovers', 'Two Made One'], ['chariot', 'VII', 'The Chariot', 'Reins and Road'],
+  ['strength', 'VIII', 'Strength', 'The Gentle Hand'], ['hermit', 'IX', 'The Hermit', 'One Lamp, One Path'],
+  ['wheel', 'X', 'Wheel of Fortune', 'The Turning Rim'], ['justice', 'XI', 'Justice', 'The Level Scale'],
+  ['hanged', 'XII', 'The Hanged Man', 'Inverted Sight'], ['death', 'XIII', 'Death', 'The Clean Break'],
+  ['temperance', 'XIV', 'Temperance', 'The Measured Pour'], ['devil', 'XV', 'The Devil', 'The Willing Chain'],
+  ['tower', 'XVI', 'The Tower', 'The Sudden Bolt'], ['star', 'XVII', 'The Star', 'Water Under Starlight'],
+  ['moon', 'XVIII', 'The Moon', 'The Long Tide'], ['sun', 'XIX', 'The Sun', 'Unshaded Noon'],
+  ['judgement', 'XX', 'Judgement', 'The Sounding Call'], ['world', 'XXI', 'The World', 'The Closed Circle'],
+].map(([id, roman, name, essence]) => ({ id, roman, name, essence }));
+const ART = (() => {
+  const Wd = ART_W, X = ART_W / 2, Y = ART_H / 2;
+  return {
+    fool(p) { for (let i = 0; i < 5; i++) { const x = 18 + i * 16, y = 92 + i * 22; p.line(x, y, x + 16, y, 1.6); p.line(x + 16, y, x + 16, y + 22, 1.6); }
+      p.hatch(18, 114, 80, 112, 6, -1.0, .6); p.ring(126, 74, 30, 1.5, 'ink', 1.4, 24); p.rays(126, 74, 34, 46, 12, .9); p.dot(126, 74, 12); p.diamond(126, 74, 19, undefined, 1); p.line(100, 196, 168, 150, 1.4); p.fillDiamond(168, 150, 5); },
+    magician(p) { p.rays(X, Y, 6, 108, 18, 1.6); p.ring(X, Y, 46, 1.6, 'ink', 1.6, 26); p.diamond(X, Y, 52, undefined, 1.1); p.eye(X, Y, 25, 11); },
+    priestess(p) { for (const x of [38, Wd - 38]) { p.line(x, 46, x, 208, 2.6); p.poly([[x - 12, 38], [x + 12, 38], [x + 12, 48], [x - 12, 48]], 1.5, 'ink', .8); p.poly([[x - 14, 206], [x + 14, 206], [x + 14, 216], [x - 14, 216]], 1.5, 'ink', .8); }
+      p.poly([[48, 56], [Wd - 48, 56], [Wd - 48, 204], [48, 204]], 1.4, 'ink', 1); p.hatch(50, 58, Wd - 100, 144, 5, 1.45, .7); p.line(48, 56, Wd - 48, 56, 1.8);
+      for (const d of [[X, 84], [X - 20, 106], [X + 20, 106], [X, 128]]) p.diamond(d[0], d[1], 6, 8, 1);
+      p.fillDiamond(X, 106, 9, 12, 'gold'); const c = p.ringPoints(X, 176, 19, .5, 18); p.fillSmoothPts(c, 'gold', true); p.fillSmoothPts(c.map(q => [q[0] + 13, q[1]]), 'paper'); },
+    empress(p) { for (let i = 0; i < 6; i++) { const y = 150 + i * 14, pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push([10 + t * (Wd - 20), y - Math.cos(t * Math.PI) * (7 - i)]); } p.smooth(pts, false, 1.2); }
+      p.dot(X, 104, 20); p.ring(X, 104, 30, 1.5, 'ink', 1.5, 24); p.rays(X, 104, 32, 42, 8, 1.2, Math.PI / 8);
+      for (const dir of [-1, 1]) { p.smooth([[X, 104], [X + dir * 22, 84], [X + dir * 34, 52]], false, 1.5); p.smooth([[X + dir * 32, 54], [X + dir * 44, 38], [X + dir * 50, 50], [X + dir * 38, 60]], true, 1.2); }
+      p.fillDiamond(X, 52, 7); },
+    emperor(p) { p.poly([[28, 40], [Wd - 28, 40], [Wd - 28, 208], [28, 208]], 2, 'ink', 1.4); p.poly([[42, 54], [Wd - 42, 54], [Wd - 42, 194], [42, 194]], 1.2, 'ink', 1.2); p.line(X, 54, X, 194, 1.5); p.line(42, 124, Wd - 42, 124, 1.5);
+      p.fillPoly([[X - 18, 96], [X + 18, 96], [X + 18, 152], [X - 18, 152]], 'gold', .9); p.diamond(X, 124, 11, undefined, 1.1); p.hatch(44, 56, 42, 42, 5, -.7, .6); p.hatch(Wd - 86, 150, 42, 42, 5, -.7, .6); p.rays(X, 124, 78, 92, 4, 1.6, Math.PI / 4); },
+    hierophant(p) { for (const [y, rad] of [[44, 52], [62, 38], [80, 24]]) { const pts = []; for (let k = 0; k <= 10; k++) { const a = Math.PI + k / 10 * Math.PI; pts.push([X + Math.cos(a) * rad, y + Math.sin(a) * rad * .62]); } p.smooth(pts, false, 1.6); }
+      p.line(X - 52, 44, X - 52, 200, 1.8); p.line(X + 52, 44, X + 52, 200, 1.8); p.line(X - 62, 200, X + 62, 200, 1.8);
+      for (const dir of [-1, 1]) { p.line(X, 120, X + dir * 34, 186, 1.6); p.ring(X + dir * 34, 186, 8, 1.4, 'ink', .6, 14); p.line(X + dir * 12, 150, X + dir * 22, 146, 1.2); }
+      p.fillDiamond(X, 108, 15, 19, 'gold'); p.diamond(X, 108, 22, 27, 1); },
+    lovers(p) { p.ring(X - 26, Y + 8, 48, 1.7, 'ink', 1.5, 26); p.ring(X + 26, Y + 8, 48, 1.7, 'ink', 1.5, 26); p.fillPoly([[X, Y - 32], [X + 16, Y + 8], [X, Y + 48], [X - 16, Y + 8]], 'gold', .9);
+      p.rays(X, 34, 22, 40, 7, 1.2, Math.PI * .12); p.diamond(X, 34, 12, undefined, 1.2); p.line(14, Y + 66, Wd - 14, Y + 66, 1.3); p.hatch(14, Y + 68, Wd - 28, 24, 5, -.9, .6); },
+    chariot(p) { p.ring(X, Y - 6, 54, 2, 'ink', 1.6, 28); p.ring(X, Y - 6, 44, 1, 'ink', 1.2, 24); p.rays(X, Y - 6, 10, 44, 10, 1.4); p.dot(X, Y - 6, 11); p.diamond(X, Y - 6, 16, undefined, 1);
+      for (let i = 0; i < 3; i++) { const y = Y + 66 + i * 12; p.smooth([[26, y - 7], [X, y + 5], [Wd - 26, y - 7]], false, 1.5 - i * .25); }
+      p.line(24, 42, 60, 42, 1.4); p.line(Wd - 60, 42, Wd - 24, 42, 1.4); p.ticks(X, Y - 6, 58, 6, 20); },
+    strength(p) { for (const dir of [-1, 1]) { const pts = []; for (let i = 0; i < 18; i++) { const a = i / 18 * TAU; pts.push([X + dir * 30 + Math.cos(a) * 30, Y + Math.sin(a) * 26 + p.r.sym(1.1)]); } p.smooth(pts, true, 2); }
+      p.dot(X, Y, 8); p.rays(X, Y, 66, 86, 16, .9); p.ring(X, Y, 64, 1.2, 'ink', 1.6, 26); p.fillDiamond(X, Y - 92, 8); p.fillDiamond(X, Y + 92, 8); },
+    hermit(p) { p.line(X + 44, 34, X + 44, 214, 2.4); p.poly([[X - 34, 72], [X + 8, 72], [X + 16, 96], [X + 16, 132], [X - 42, 132], [X - 42, 96]], 1.8, 'ink', 1.2); p.line(X - 42, 96, X + 16, 96, 1.2);
+      p.fillPoly([[X - 13, 104], [X - 4, 118], [X - 13, 128], [X - 22, 118]], 'gold', .7); p.line(X - 13, 60, X - 13, 72, 1.4); p.rays(X - 13, 116, 30, 46, 9, .9, Math.PI * .08);
+      p.line(10, 190, Wd - 10, 190, 1.5); p.hatch(10, 192, Wd - 20, 34, 6, -1.1, .7); p.fillDiamond(X + 44, 34, 7); },
+    wheel(p) { p.ring(X, Y, 74, 2, 'ink', 1.8, 32); p.ring(X, Y, 62, 1, 'ink', 1.4, 28); p.ring(X, Y, 26, 1.5, 'ink', 1.2, 20); p.rays(X, Y, 26, 62, 8, 1.6, Math.PI / 8); p.ticks(X, Y, 76, 7, 32); p.dot(X, Y, 13);
+      for (let i = 0; i < 4; i++) { const a = i / 4 * TAU; p.fillDiamond(X + Math.cos(a) * 88, Y + Math.sin(a) * 100, 8); }
+      p.poly([[X, Y - 44], [X + 44, Y], [X, Y + 44], [X - 44, Y]], 1, 'ink', 1.2); },
+    justice(p) { p.line(X, 44, X, 206, 2.2); p.line(X - 66, 84, X + 66, 84, 2);
+      for (const dir of [-1, 1]) { p.line(X + dir * 66, 84, X + dir * 66, 118, 1.2); p.smooth([[X + dir * 88, 118], [X + dir * 66, 142], [X + dir * 44, 118]], false, 1.6); p.line(X + dir * 88, 118, X + dir * 44, 118, 1.2); }
+      p.fillDiamond(X, 84, 13, 15, 'gold'); p.diamond(X, 44, 10, undefined, 1.2); p.line(X - 40, 206, X + 40, 206, 2); p.hatch(X - 40, 208, 80, 22, 5, -.8, .7); },
+    hanged(p) { p.line(22, 46, Wd - 22, 46, 2.2); p.line(22, 46, 22, 76, 1.6); p.line(Wd - 22, 46, Wd - 22, 76, 1.6); p.line(X, 46, X, 108, 1.4); p.poly([[X - 40, 108], [X + 40, 108], [X, 182]], 2, 'ink', 1.4);
+      p.hatch(X - 26, 114, 52, 44, 6, 1.1, .6); p.dot(X, 196, 12); p.ring(X, 196, 20, 1.2, 'ink', 1.2, 20); p.diamond(X, 138, 12, undefined, 1.1); },
+    death(p) { p.line(8, 148, Wd - 8, 148, 2.2); const arc = []; for (let k = 0; k <= 12; k++) { const a = Math.PI + k / 12 * Math.PI; arc.push([X + Math.cos(a) * 40, 148 + Math.sin(a) * 40]); } p.fillChord(arc, 'gold');
+      p.rays(X, 148, 44, 62, 9, 1.2, Math.PI); for (let i = 0; i < 7; i++) { const x = 22 + i * 24; p.line(x, 152, x, 152 + 26 + (i % 3) * 8, 1.4); }
+      p.smooth([[26, 96], [X, 58], [Wd - 26, 96]], false, 1.8); p.fillDiamond(X, 58, 8); p.hatch(8, 196, Wd - 16, 32, 7, -1.2, .6); },
+    temperance(p) { p.poly([[X - 42, 52], [X + 42, 52], [X, 120]], 1.9, 'ink', 1.3); p.poly([[X - 42, 200], [X + 42, 200], [X, 132]], 1.9, 'ink', 1.3); p.fillPoly([[X - 15, 118], [X + 15, 118], [X + 15, 134], [X - 15, 134]], 'gold', .7);
+      for (let i = 0; i < 5; i++) p.fillDiamond(X + (i % 2 === 1 ? 5 : -5), 140 + i * 12, 3.2);
+      p.line(X - 42, 52, X + 42, 52, 1.2); p.line(X - 42, 200, X + 42, 200, 1.2); p.hatch(X - 26, 58, 52, 32, 6, .9, .55); p.ring(X, 126, 60, .9, 'ink', 1.6, 26); },
+    devil(p) { p.poly([[X - 44, 76], [X + 44, 76], [X + 30, 176], [X - 30, 176]], 2, 'ink', 1.4); p.smooth([[X - 44, 76], [X - 58, 44], [X - 30, 58]], false, 1.8); p.smooth([[X + 44, 76], [X + 58, 44], [X + 30, 58]], false, 1.8);
+      p.eye(X, 112, 22, 10); p.hatch(X - 30, 132, 60, 38, 5, -.9, .6); for (let i = 0; i < 4; i++) { const y = 150 + i * 20; p.ring(26, y, 8, 1.3, 'ink', .7, 14, .7); p.ring(Wd - 26, y, 8, 1.3, 'ink', .7, 14, .7); }
+      p.diamond(X, 196, 9, undefined, 1.2); },
+    tower(p) { p.poly([[X - 32, 74], [X + 32, 74], [X + 38, 212], [X - 38, 212]], 2.1, 'ink', 1.4); p.poly([[X - 40, 58], [X + 40, 58], [X + 32, 74], [X - 32, 74]], 1.6, 'ink', 1.2);
+      for (let i = 1; i < 4; i++) p.line(X - 34 - i, 74 + i * 34, X + 34 + i, 74 + i * 34, 1);
+      p.fillSmooth([[X + 4, 26], [X + 22, 62], [X + 6, 60], [X + 16, 104], [X - 10, 66], [X + 4, 64], [X - 14, 30]], 'gold'); p.rays(X, 40, 26, 40, 5, 1.1, -Math.PI * .85);
+      for (const f of [[30, 120], [Wd - 30, 150], [36, 186], [Wd - 34, 196]]) { p.fillDiamond(f[0], f[1], 6); p.line(f[0], f[1] - 16, f[0], f[1] - 7, .9); } },
+    star(p) { for (let i = 0; i < 8; i++) { const a = i / 8 * TAU - Math.PI / 2, len = i % 2 === 1 ? 40 : 74; p.line(X, 96, X + Math.cos(a) * len, 96 + Math.sin(a) * len, i % 2 === 1 ? 1.2 : 1.7, 'ink', .8); }
+      p.dot(X, 96, 15); p.ring(X, 96, 24, 1.2, 'ink', 1.3, 20); p.diamond(X, 96, 32, undefined, .9); p.ripples(Wd, 180, 5, 11);
+      for (const c of [[34, 52], [Wd - 34, 62], [28, 130], [Wd - 30, 126]]) { p.line(c[0] - 6, c[1], c[0] + 6, c[1], .9, 'ink', .4); p.line(c[0], c[1] - 6, c[0], c[1] + 6, .9, 'ink', .4); } },
+    moon(p) { p.ring(X, 88, 44, 1.6, 'ink', 1.6, 26); const cres = p.ringPoints(X + 6, 88, 32, .6, 20); p.fillSmoothPts(cres, 'gold', true); p.fillSmoothPts(cres.map(q => [q[0] + 16 + (q[0] - X - 6) * .1, q[1]]), 'paper');
+      p.ticks(X, 88, 48, 7, 24); for (const x of [36, Wd - 36]) { p.poly([[x - 12, 150], [x + 12, 150], [x + 12, 206], [x - 12, 206]], 1.6, 'ink', 1); p.poly([[x - 12, 150], [x, 134], [x + 12, 150]], 1.4, 'ink', .8); p.fillDiamond(x, 168, 5); }
+      for (let i = 0; i < 7; i++) { const y = 152 + i * 11; p.line(X, y, X, y + 6, 1.6, 'ink', .3); } p.ripples(Wd, 224, 2, 9); },
+    sun(p) { p.rays(X, 104, 56, 92, 12, 1.8); p.rays(X, 104, 56, 76, 12, 1, Math.PI / 12); p.ring(X, 104, 52, 2, 'ink', 1.6, 28); p.dot(X, 104, 40); p.ring(X, 104, 40, 1.2, 'ink', .8, 22); p.eye(X, 104, 22, 10);
+      p.line(10, 214, Wd - 10, 214, 1.6); p.hatch(10, 216, Wd - 20, 22, 6, -1.2, .7); p.fillDiamond(22, 34, 7); p.fillDiamond(Wd - 22, 34, 7); },
+    judgement(p) { p.poly([[X - 30, 26], [X + 30, 26], [X + 11, 92], [X - 11, 92]], 2, 'ink', 1.2); p.line(X - 34, 26, X + 34, 26, 1.6); p.line(X - 18, 58, X + 18, 58, 1); p.fillDiamond(X, 104, 13, 17, 'gold'); p.rays(X, 104, 20, 34, 8, 1, Math.PI / 8);
+      for (let i = 0; i < 3; i++) { const y = 152 + i * 26; p.line(20 + i * 8, y, Wd - 20 - i * 8, y, 1.8 - i * .3); }
+      for (const dir of [-1, 1]) { p.smooth([[X + dir * 58, 206], [X + dir * 40, 168], [X + dir * 34, 136]], false, 1.5); p.fillDiamond(X + dir * 34, 130, 6); }
+      p.hatch(20, 208, Wd - 40, 24, 6, -1.1, .7); },
+    world(p) { p.ring(X, Y, 74, 2.2, 'ink', 2, 30, 1.06); p.ring(X, Y, 66, .9, 'ink', 1.4, 28, 1.06);
+      for (let i = 0; i < 26; i++) { const a = i / 26 * TAU; p.line(X + Math.cos(a) * 66, Y + Math.sin(a) * 70, X + Math.cos(a + .2) * 74, Y + Math.sin(a + .2) * 78, 1.1, 'ink', .4); }
+      p.dot(X, Y, 24); p.line(X - 34, Y, X + 34, Y, 1.4); p.line(X, Y - 34, X, Y + 34, 1.4); p.diamond(X, Y, 34, undefined, 1.1);
+      for (const s of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const x = X + s[0] * 76, y = Y + s[1] * 104; p.fillDiamond(x, y, 9); p.rays(x, y, 12, 22, 4, 1, Math.PI / 4); } },
+  };
+})();
+const _marks = {};
+function artMarks(id) { if (!_marks[id]) { const p = new Pen((seedHash(id) ^ 0x9E3779B9) >>> 0); ART[id](p); _marks[id] = p.marks; } return _marks[id]; }
+function frameMarks() { if (!_marks._frame) { const p = new Pen(7); p.poly([[5, 5], [221, 5], [221, 395], [5, 395]], 1.1, 'ink', .9); p.poly([[11, 11], [215, 11], [215, 389], [11, 389]], 2.4, 'ink', 1.1); p.poly([[20, 52], [206, 52], [206, 300], [20, 300]], 1.3, 'ink', 1); p.line(11, 300, 215, 300, 2.2);
+  const br = 13; for (const [x, y, sx, sy] of [[20, 52, 1, 1], [206, 52, -1, 1], [20, 300, 1, -1], [206, 300, -1, -1]]) { p.line(x + sx * 4, y + sy * 4, x + sx * br, y + sy * 4, 1.1, 'accent', .5); p.line(x + sx * 4, y + sy * 4, x + sx * 4, y + sy * br, 1.1, 'accent', .5); }
+  _marks._frame = p.marks; } return _marks._frame; }
+function wheelMarks(n) { const key = '_wheel' + n; if (!_marks[key]) { const p = new Pen(1212), c = n / 2, u = n / 1500;
+  for (const [rad, w] of [[300, 1.4], [318, .8], [470, 1.2], [596, 1.6], [610, .8], [740, 1.0]]) p.ring(c, c, rad * u, w * u * 1.4, 'ink', 2.2 * u, 64);
+  for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; p.line(c + Math.cos(a) * 318 * u, c + Math.sin(a) * 318 * u, c + Math.cos(a) * 596 * u, c + Math.sin(a) * 596 * u, 1.1 * u * 1.4, 'ink', 1.6 * u); const m = a + Math.PI / 12; p.ring(c + Math.cos(m) * 533 * u, c + Math.sin(m) * 533 * u, 7 * u, .8 * u * 1.4, 'ink', .4 * u, 12); }
+  p.ticks(c, c, 596 * u, 14 * u, 120, .8 * u * 1.4); p.ticks(c, c, 470 * u, 9 * u, 72, .8 * u * 1.4);
+  for (let k = 0; k < 2; k++) { const o = k * Math.PI / 4, pts = []; for (let i = 0; i < 4; i++) { const a = o + i / 4 * TAU - Math.PI / 2; pts.push([c + Math.cos(a) * 300 * u, c + Math.sin(a) * 300 * u]); } p.poly(pts, 1.0 * u * 1.4, 'ink', 1.8 * u); }
+  p.ring(c, c, 124 * u, 1.0 * u * 1.4, 'ink', 1.4 * u, 40); p.rays(c, c, 124 * u, 300 * u, 16, .7 * u * 1.4);
+  _marks[key] = p.marks; } return _marks[key]; }
+
+// --- drawing marks ------------------------------------------------------------
+const inkOf = k => ({ ink: PAL.ink, accent: PAL.blood, gold: PAL.gold, paper: PAL.paper }[k]);
+function polyPathOf(pts, closed) { const p = new Path2D(); pts.forEach((q, i) => i ? p.lineTo(q[0], q[1]) : p.moveTo(q[0], q[1])); if (closed) p.closePath(); return p; }
+function markPath(m) { return m._p || (m._p = polyPathOf(m.pts, m.closed)); }
+function markBox(m) { if (!m._b) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of m.pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } m._b = [x0, y0, x1 - x0, y1 - y0]; } return m._b; }
+function markLen(m) { return m._l ?? (m._l = pathLength(m.pts, m.closed)); }
+// gold is laid as leaf: flat gold, beaten with light and dark hatching (the app bands it with a gradient; here the finish does it)
+function leaf(c, path, box, seed, sc = 1) {
+  c.fillStyle = PAL.gold; c.fill(path);
+  const g = Math.max(1.6, 2.4 / sc);
+  hatch(c, path, box, { angle: .8, gap: g * 1.3, len: 6 / sc, jitter: 2 / sc, color: PAL.goldLit, alpha: .55, width: .9 / sc, seed });
+  hatch(c, path, box, { angle: -.75, gap: g * 1.8, len: 5 / sc, jitter: 2 / sc, color: PAL.goldDeep, alpha: .35, width: .8 / sc, seed: seed + 1 });
+}
+// draw a set of marks, all finished (sc = the scale they are drawn at, so hairlines keep their weight)
+function drawMarks(c, marks, sc = 1, o = {}) {
+  const { tint } = o; c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  marks.forEach((m, i) => {
+    if (m.fill) { const p = markPath(m); if (tint) { c.fillStyle = tint; c.fill(p); } else if (m.fill === 'gold') leaf(c, p, markBox(m), 40 + i, sc); else { c.fillStyle = inkOf(m.fill); c.fill(p); } }
+    if (m.stroke) { c.strokeStyle = tint || inkOf(m.stroke); c.lineWidth = m.width; c.stroke(markPath(m)); }
+  });
+  c.restore();
+}
+// marks being written: each line laid from its start, led by a bright nib, cooling from gold into ink (InkCanvas in CardImages.swift)
+function ramp01(x, a, b) { const t = clamp((x - a) / Math.max(b - a, 1e-4), 0, 1); return t * t * (3 - 2 * t); }
+function drawMarksWriting(c, marks, progress, spread = .62, sc = 1) {
+  const n = Math.max(marks.length - 1, 1), len = 1 - spread; c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  marks.forEach((m, i) => {
+    const start = i / n * spread, local = clamp((progress - start) / len, 0, 1); if (local <= 0) return;
+    const e = 1 - Math.pow(1 - local, 2.2);
+    if (m.fill) { const a = ramp01(local, .35, 1); c.globalAlpha = a; const p = markPath(m); if (m.fill === 'gold') leaf(c, p, markBox(m), 40 + i, sc); else { c.fillStyle = inkOf(m.fill); c.fill(p); } c.globalAlpha = 1; }
+    if (!m.stroke) return;
+    const L = markLen(m), p = markPath(m), cool = ramp01(local, .25, 1);
+    c.lineWidth = m.width; c.setLineDash(e >= .999 ? [] : [L * e, L + 1]);
+    c.globalAlpha = 1 - cool; c.strokeStyle = PAL.gold; c.stroke(p);
+    c.globalAlpha = cool; c.strokeStyle = inkOf(m.stroke); c.stroke(p);
+    if (local < 1) { c.globalAlpha = .9 * (1 - local); c.strokeStyle = PAL.goldLit; c.lineWidth = m.width * 2.4; c.setLineDash([0, L * Math.max(0, e - .06), L * .06 + .01, L + 1]); c.stroke(p); }
+    c.globalAlpha = 1; c.setLineDash([]);
+  });
+  c.restore();
+}
+// type on the card, the app's Didot
+const DIDOT = 'Didot, "Bodoni 72", serif';
+function cardText(c, text, x, y, size, o = {}) { const { bold = false, italic = false, color = PAL.ink, tracking = 0, alpha: al = 1 } = o; if (al <= 0) return; c.save(); c.globalAlpha = al; c.fillStyle = color; c.font = `${italic ? 'italic ' : ''}${bold ? 'bold ' : ''}${size}px ${DIDOT}`; c.letterSpacing = tracking + 'px'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(text, x + tracking / 2, y); c.restore(); }
+// the card face in card space (226 x 400). ink 1 = finished; below 1 it is being written, as in CardFace.
+function cardFace(c, card, ink = 1, seed = 1) {
+  const stock = roundRectPath(0, 0, CARD_W, CARD_H, 3);
+  c.fillStyle = PAL.paper; c.fill(stock);
+  grain(c, stock, [0, 0, CARD_W, CARD_H], 900, PAL.shade, .07, seed, .9);
+  const fin = ink >= .999;
+  if (fin) drawMarks(c, frameMarks(), 1); else drawMarksWriting(c, frameMarks(), ramp01(ink, 0, .22), .5);
+  c.save(); c.translate(113 - ART_W / 2, 176 - ART_H / 2);
+  if (fin) drawMarks(c, artMarks(card.id), 1); else drawMarksWriting(c, artMarks(card.id), clamp((ink - .05) / .87, 0, 1), .62);
+  c.restore();
+  cardText(c, card.roman, 114, 33, 15, { bold: true, tracking: 3.2, alpha: fin ? 1 : ramp01(ink, .46, .74) });
+  const up = card.name.toUpperCase(); c.save(); c.font = `bold 17px ${DIDOT}`; c.letterSpacing = '1.4px'; const two = c.measureText(up).width > 176; c.restore();
+  const words = up.split(' '), mid = words.length === 2 ? 1 : Math.ceil(words.length / 2);
+  if (two) { cardText(c, words.slice(0, mid).join(' '), 113, 328, 17, { bold: true, tracking: 1.4, alpha: fin ? 1 : ramp01(ink, .62, .9) }); cardText(c, words.slice(mid).join(' '), 113, 348, 17, { bold: true, tracking: 1.4, alpha: fin ? 1 : ramp01(ink, .62, .9) }); cardText(c, card.essence, 113, 368, 12.5, { italic: true, color: PAL.blood, alpha: fin ? 1 : ramp01(ink, .72, 1) }); }
+  else { cardText(c, card.name.toUpperCase(), 113, 337, 17, { bold: true, tracking: 1.4, alpha: fin ? 1 : ramp01(ink, .62, .9) }); cardText(c, card.essence, 113, 358, 12.5, { italic: true, color: PAL.blood, alpha: fin ? 1 : ramp01(ink, .72, 1) }); }
+}
+
+// ===================== RISO: FIRST LIGHT ON PEARL STOCK =====================
+// A place is printed like a risograph: four plates (cornflower, lavender, rose, apricot), each drawn
+// as coverage in grey on white and printed as a halftone at its own angle, a hair out of register.
+// Then the key: silhouettes in ink, and the one gold light at (CX, CY).
+const PLATES = [0, 1, 2, 3].map(() => layer());
+const gray = v => { const k = Math.round(255 - clamp(v, 0, 1) * 255); return `rgb(${k},${k},${k})`; };
+const KNOCK = '#fff';
+function linGrad(g, x0, y0, x1, y1, stops) { const gr = g.createLinearGradient(x0, y0, x1, y1); for (const [t, v] of stops) gr.addColorStop(t, gray(v)); return gr; }
+function radGrad(g, x, y, r0, r1, stops) { const gr = g.createRadialGradient(x, y, r0, x, y, r1); for (const [t, v] of stops) gr.addColorStop(t, gray(v)); return gr; }
+const REG = [[0, 0], [2.2, -1.4], [-1.6, 1.8], [1.2, 2.4]];   // misregistration per plate, logical px
+function risoPrint(c, draw, o = {}) {
+  paper(c, PAL.paper, null, o.seed || 5);
+  const inks = PAL.inks, angles = [.26, 1.31, .79, 0];
+  inks.forEach((ink, k) => {
+    const P = PLATES[k], g = P.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; g.fillStyle = '#fff'; g.fillRect(0, 0, P.width, P.height);
+    resetT(g); g.translate(REG[k][0], REG[k][1]); g.fillStyle = '#000'; g.strokeStyle = '#000'; draw(g, k);
+    printPlate(c, P, { cell: o.cell || 5.4, ink, angle: angles[k], seed: (o.seed || 5) * 10 + k, jitter: .07, maxCov: o.maxCov ?? .72 });
+  });
+}
+// the first-light sky as coverage: blue overhead, lilac in the air, rose and dawn rising from below the horizon
+function skyPlate(g, k, hz, o = {}) {
+  const { blue = 1, dawnX = CX, dawn = 1, rose = 1, lilac = 1 } = o, band = (stops) => linGrad(g, 0, 0, 0, hz, stops);
+  if (k === 0) g.fillStyle = band([[0, .26 * blue], [.3, .16 * blue], [.5, .05 * blue], [.62, 0]]);
+  if (k === 1) g.fillStyle = band([[.18, 0], [.42, .13 * lilac], [.62, .08 * lilac], [.8, 0]]);
+  if (k === 2) g.fillStyle = band([[.5, 0], [.75, .11 * rose], [.92, .09 * rose], [1, .05 * rose]]);
+  if (k === 3) g.fillStyle = band([[.66, 0], [.9, .1 * dawn], [1, .2 * dawn]]);
+  g.fillRect(-10, -10, W + 20, H + 20);
+  if (k === 3) glow(g, dawnX, hz + 30, 520, .2 * dawn);
+}
+// a glow laid over what the plate already carries (multiplied, as ink over ink)
+function glow(g, x, y, r, v, r0 = 0) { g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = radGrad(g, x, y, r0, r, [[0, v], [1, 0]]); g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); g.restore(); }
+// the day moon, as in the app's corner: pearl highlands, lilac seas, a ghost of the unlit disc
+function moonPlate(g, k, x, y, r) {
+  g.save(); g.fillStyle = KNOCK; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+  if (k === 1) { g.fillStyle = gray(.34); for (const [dx, dy, rr] of [[-.28, -.22, .3], [.18, -.3, .2], [.05, .12, .34], [-.35, .3, .18]]) { g.beginPath(); g.arc(x + dx * r, y + dy * r, rr * r, 0, TAU); g.fill(); } }
+  g.restore();
+}
+function moonKey(c, x, y, r, seed) { c.save(); c.strokeStyle = alpha(PAL.shade, .55); c.lineWidth = 1.3; wob(c, ellPts(x, y, r + 1, r + 1, 0, 40), 1.2, seed, true); c.restore(); }
+// the gold light: every place's question, always at the centre of the frame
+function goldLight(c, x, y, r, seed, shape = 'disc') {
+  c.save();
+  const p = shape === 'disc' ? ellPath(x, y, r, r) : shape;
+  c.fillStyle = PAL.gold; c.fill(p);
+  hatch(c, p, [x - r * 2, y - r * 2, r * 4, r * 4], { angle: .8, gap: 2.6, len: 5, jitter: 2, color: PAL.goldLit, alpha: .6, width: 1, seed });
+  c.strokeStyle = PAL.goldDeep; c.lineWidth = 1.4; if (shape === 'disc') wob(c, ellPts(x, y, r, r, 0, 26), 1, seed + 1, true); else c.stroke(p);
+  c.restore();
+}
+// gold dust rising from a light, as it gathers in the app's sky; moved on the twos
+function motes(c, x, y, tau, seed, n = 16, spread = 70, lift = 1) {
+  const r = rng(seed), f = Math.floor(tau * FPS_DRAW) / FPS_DRAW;
+  c.save(); for (let k = 0; k < n; k++) { const life = 1.8 + r() * 1.4, off = r() * life, ph = ((f + off) % life) / life, sx = (r() - .5) * spread, rise = (90 + r() * 120) * lift, sz = 1.3 + r() * 2.2, lit = r() < .35;
+    const px = x + sx * (.3 + ph) + Math.sin(ph * 5 + k) * 7, py = y - 14 - ph * rise; c.globalAlpha = Math.sin(ph * Math.PI) * .95; c.fillStyle = lit ? PAL.goldLit : PAL.gold; c.beginPath(); c.arc(px, py, sz, 0, TAU); c.fill(); }
+  c.restore();
+}
+// a few birds going over, wings on the twos
+function birds(c, x0, y0, tau, seed, n = 3) { const r = rng(seed), f = Math.floor(tau * FPS_DRAW); c.save(); c.strokeStyle = PAL.ink; c.lineCap = 'round'; c.lineJoin = 'round'; c.lineWidth = 2.2;
+  for (let k = 0; k < n; k++) { const x = x0 + tau * (70 + r() * 20) + k * 46 + r() * 20, y = y0 + k * 16 + r() * 10 + Math.sin(tau * 3 + k) * 3, s = 8 + r() * 4, up = (f + k) % 4 < 2 ? 1 : -.2; c.beginPath(); c.moveTo(x - s, y - s * .5 * up); c.quadraticCurveTo(x - s * .4, y - s * .45 * up, x, y); c.quadraticCurveTo(x + s * .4, y - s * .45 * up, x + s, y - s * .5 * up); c.stroke(); }
+  c.restore(); }
+// rings of sound from the light, as a bowl rings: born at `t0`, travelling outward
+function bowlRings(c, x, y, tau, t0, seed, n = 3) {
+  for (let k = 0; k < n; k++) { const t = tau - t0 - k * .18; if (t <= 0) continue; const r = 22 + t * 330, a = clamp(1 - t / 1.2, 0, 1) * .38; if (a <= 0) continue;
+    c.save(); c.globalAlpha = a; crayon(c, ellPts(x, y, r, r, 0, Math.max(40, r / 5 | 0)), k % 2 ? PAL.accents[1] : PAL.gold, 2.4 - k * .5, seed + k, true); c.restore(); }
+}
+
+// --- people: small ink silhouettes, reading at a glance ----------------------------
+// Local coords: origin at the feet (standing) or under the seat's front edge (sitting), up = -y, ~150 tall at scale 1.
+// pose: { sit, look 0..1 (face lifted to the sky), hair 'short'|'bun'|'long', coat 'short'|'mid'|'long', arms 'down'|'up', flip }
+function figurePath(pose = {}) {
+  const { sit = 0, look = 0, hair = 'short', coat = 'mid', arms = 'down' } = pose; const parts = []; const part = () => { const q = new Path2D(); parts.push(q); return q; }; let p = part();
+  const hy = sit === 1 || sit === 3 ? -118 : sit === 2 ? -96 : -141, lk = look;
+  p.ellipse(lk * 1.6, hy - lk * 1.8, 10.5, 12.5, -lk * .4, 0, TAU);
+  if (hair === 'bun') part().ellipse(-4 - lk * 3, hy - 13 + lk * 2, 6.5, 6, 0, 0, TAU);
+  if (hair === 'long') { p = part(); p.moveTo(-11, hy - 2); p.bezierCurveTo(-13, hy + 12, -12, hy + 22, -16, hy + 26); p.lineTo(14, hy + 26); p.bezierCurveTo(11, hy + 20, 12, hy + 10, 10, hy - 2); p.closePath(); }
+  const n = hy + 14;   // neck
+  p = part();
+  if (!sit) {
+    const hem = coat === 'long' ? -36 : coat === 'short' ? -70 : -52;
+    p.moveTo(-5, n); p.lineTo(-6, n + 5); p.bezierCurveTo(-16, n + 6, -21, n + 10, -22, n + 19);
+    p.lineTo(-20, n + 48); p.lineTo(-19, hem); p.lineTo(-11, hem); p.lineTo(-11, -4); p.lineTo(-14, 0); p.lineTo(-2, 0); p.lineTo(-2, hem + 6);
+    p.lineTo(2, hem + 6); p.lineTo(2, 0); p.lineTo(14, 0); p.lineTo(11, -4); p.lineTo(11, hem); p.lineTo(19, hem); p.lineTo(20, n + 48); p.lineTo(22, n + 19);
+    p.bezierCurveTo(21, n + 10, 16, n + 6, 6, n + 5); p.lineTo(5, n); p.closePath();
+    if (arms === 'up') for (const s of [-1, 1]) { p = part(); p.moveTo(s * 15, n + 12); p.bezierCurveTo(s * 24, n - 6, s * 22, n - 30, s * 14, n - 52); p.lineTo(s * 9, n - 50); p.bezierCurveTo(s * 14, n - 30, s * 14, n - 8, s * 6, n + 14); p.closePath(); }
+  } else if (sit === 3) {   // seen from behind, on a bench: the back down to the seat
+    p.moveTo(-5, n); p.lineTo(-6, n + 5); p.bezierCurveTo(-17, n + 6, -22, n + 10, -23, n + 20);
+    p.lineTo(-21, -58); p.lineTo(-23, -40); p.lineTo(23, -40); p.lineTo(21, -58); p.lineTo(23, n + 20);
+    p.bezierCurveTo(22, n + 10, 17, n + 6, 6, n + 5); p.lineTo(5, n); p.closePath();
+  } else if (sit === 1) {   // on a chair or a bench: seat 44 above the floor
+    p.moveTo(-5, n); p.lineTo(-6, n + 5); p.bezierCurveTo(-16, n + 6, -20, n + 10, -21, n + 19);
+    p.lineTo(-19, -58); p.bezierCurveTo(-19, -48, -14, -44, -6, -44);
+    p.lineTo(34, -44); p.lineTo(39, -39); p.lineTo(41, -3); p.lineTo(50, 0); p.lineTo(50, 4); p.lineTo(32, 4); p.lineTo(30, -32); p.lineTo(8, -32);
+    p.lineTo(14, -58); p.lineTo(18, n + 19); p.bezierCurveTo(17, n + 10, 14, n + 6, 6, n + 5); p.lineTo(5, n); p.closePath();
+  } else {                  // on the ground, knees up, hands at the knees
+    p.moveTo(-5, n); p.lineTo(-6, n + 5); p.bezierCurveTo(-16, n + 6, -20, n + 10, -21, n + 19);
+    p.lineTo(-20, -22); p.bezierCurveTo(-20, -8, -14, 0, -4, 0);
+    p.lineTo(50, 0); p.lineTo(50, -5); p.lineTo(42, -7); p.lineTo(36, -40); p.bezierCurveTo(34, -46, 28, -46, 24, -42);
+    p.lineTo(10, -30); p.lineTo(14, -50); p.lineTo(18, n + 19); p.bezierCurveTo(17, n + 10, 14, n + 6, 6, n + 5); p.lineTo(5, n); p.closePath();
+    p = part(); p.moveTo(8, n + 16); p.lineTo(16, n + 13); p.lineTo(35, -55); p.lineTo(29, -49); p.closePath();
+  }
+  return parts;
+}
+function figure(c, x, y, s, pose = {}, seed = 1) {
+  c.save(); c.translate(x, y); c.scale(s * (pose.flip ? -1 : 1), s);
+  c.fillStyle = PAL.ink; c.strokeStyle = PAL.ink; c.lineWidth = 1.4 / s; c.lineJoin = 'round';
+  for (const p of figurePath(pose)) { c.fill(p); c.stroke(p); }
+  c.restore();
+}
+// ink helpers for the key plate
+function inkFill(c, pts, seed, o = {}) { const p = polyPath(pts); c.save(); c.fillStyle = o.color || PAL.ink; c.fill(p); c.strokeStyle = o.color || PAL.ink; c.lineWidth = o.w ?? 1.6; c.lineJoin = 'round'; wob(c, pts, o.amp ?? 1.2, seed, true); c.restore(); return p; }
+function inkLine(c, pts, w, seed, o = {}) { c.save(); c.strokeStyle = o.color || PAL.ink; c.globalAlpha = o.alpha ?? 1; c.lineWidth = w; c.lineCap = 'round'; c.lineJoin = 'round'; wob(c, pts, o.amp ?? 1.2, seed, !!o.close); c.restore(); }
+// coverage on the plates: covs = [blue, lilac, rose, apricot]; null leaves a plate alone, 0 knocks the shape out of it
+function cov(g, k, covs, path) { const v = covs[k]; if (v == null) return; g.fillStyle = typeof v === 'function' ? v(g) : (v <= 0 ? KNOCK : gray(v)); g.fill(path); }
+// the sea: blue deepening toward the viewer, the dawn laid on it under the light, knocked-out glints
+function seaPlate(g, k, hz, o = {}) {
+  const { dawnX = CX, seed = 3, glints = 80, deep = 1 } = o; const sea = rectPath(-10, hz, W + 20, H - hz + 10);
+  if (k === 0) { g.fillStyle = linGrad(g, 0, hz, 0, H, [[0, .1], [1, .3 * deep]]); g.fill(sea); }
+  if (k === 1) { g.fillStyle = linGrad(g, 0, hz, 0, H, [[0, .12], [1, .1]]); g.fill(sea); }
+  if (k === 2) { g.fillStyle = linGrad(g, 0, hz, 0, hz + 260, [[0, .16], [1, 0]]); g.fill(sea); }
+  if (k === 3) { g.save(); g.clip(sea); g.fillStyle = radGrad(g, dawnX, hz, 0, 420, [[0, .36], [.4, .14], [1, 0]]); g.fillRect(-10, hz, W + 20, H - hz + 10); g.restore(); }
+  const r = rng(seed); g.fillStyle = KNOCK;
+  for (let n = 0; n < glints; n++) { const f = Math.pow(r(), 1.5), y = hz + 5 + f * (H - hz), x = r() * (W + 100) - 50, L = (10 + r() * 50) * (.35 + f * 1.3); g.fillRect(x, y, L, 1.6 + f * 2.6); }
+}
+// clouds: soft knockouts in the sky
+function cloudPlate(g, k, x, y, s, seed) { if (k > 1) return; const r = rng(seed); g.fillStyle = KNOCK; g.beginPath(); for (let i = 0; i < 6; i++) { const cx = x + (i - 2.5) * 34 * s + (r() - .5) * 10 * s, cy = y - Math.sin(i / 5 * Math.PI) * 18 * s; g.moveTo(cx + 30 * s, cy); g.arc(cx, cy, (22 + r() * 16) * s, 0, TAU); } g.fill(); g.fillRect(x - 100 * s, y, 200 * s, 16 * s); }
+// stars come out in the day sky: four fine arms that thin to nothing, the upright one longest, a pearl heart
+function glint(c, x, y, L, a, seed) {
+  if (a <= 0) return; c.save(); c.globalAlpha = a; c.translate(x, y);
+  const arm = (dx, dy, len, wd) => { c.beginPath(); c.moveTo(-dy * wd, dx * wd); c.lineTo(dx * len, dy * len); c.lineTo(dy * wd, -dx * wd); c.closePath(); c.fill(); };
+  c.fillStyle = PAL.light; c.globalAlpha = a * .6; c.beginPath(); c.arc(0, 0, L * .5, 0, TAU); c.fill(); c.globalAlpha = a * .35; c.beginPath(); c.arc(0, 0, L * .85, 0, TAU); c.fill(); c.globalAlpha = a;
+  c.fillStyle = PAL.gold; for (const [dx, dy, f] of [[0, -1, 1], [0, 1, 1], [1, 0, .62], [-1, 0, .62]]) arm(dx, dy, L * f, L * .1);
+  c.fillStyle = PAL.goldLit; c.beginPath(); c.arc(0, 0, L * .13, 0, TAU); c.fill();
+  c.restore();
+}
+function starsOver(c, place, prog, seed, z = 1) {
+  if (prog <= 0) return; const [x0, y0, x1, y1] = place.sky, r = rng(seed), n = place.starCount || 16;
+  for (let k = 0; k < n; k++) { let x = lerp(x0, x1, r()), y = lerp(y0, y1, Math.pow(r(), 1.2)); const L = 15 + r() * 17, at = k / n * .72; x = CX + (x - CX) * z; y = CY + (y - CY) * z; if (x < 20 || x > W - 20 || y < 20) continue;
+    if (Math.hypot(x - CX, y - CY) < 70) continue; glint(c, x, y, L * (1 + (k === 0 ? .6 : 0)), sm(at, at + .25, prog, easeOut), seed + k); }
+}
+
+// ===================== THE PLACES =====================
+// Everyone's question, somewhere quiet at first light. Each place: plates(g, k) draws the four plates,
+// key(c, tau, o) the ink on top; its gold light sits at (CX, CY); `sky` is where its stars come out.
+const PLACES = {};
+// 1 · a city before anyone is up; one window lit
+PLACES.window = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 120],
+  plates(g, k) {
+    const hz = CY + 330; skyPlate(g, k, hz, { dawnX: CX + 200 });
+    moonPlate(g, k, CX + 330, CY - 360, 28);
+    const far = [[-20, CY + 90, 150], [120, CY + 40, 110], [220, CY + 120, 120], [CX + 150, CY + 60, 130], [CX + 270, CY + 130, 120], [CX + 380, CY + 20, 160]];
+    for (const [x, y, w] of far) cov(g, k, [0, .2, 0, 0], rectPath(x + CX - 540, y, w, H - y + 10));
+    const tower = polyPath([[CX - 76, H + 10], [CX - 76, CY - 210], [CX - 44, CY - 210], [CX - 44, CY - 250], [CX + 44, CY - 250], [CX + 44, CY - 210], [CX + 76, CY - 210], [CX + 76, H + 10]]);
+    cov(g, k, [.07, .46, 0, 0], tower);
+    const near = [[CX - 560, CY + 150, 300], [CX - 250, CY + 230, 150], [CX + 110, CY + 200, 170], [CX + 290, CY + 110, 260]];
+    for (const [x, y, w] of near) cov(g, k, [0, .38, 0, 0], rectPath(x, y, w, H - y + 10));
+    if (k === 3) glow(g, CX, CY, 140, .38, 20);
+    // a few windows, unlit, on the near blocks and the tower
+    const r = rng(12); g.fillStyle = KNOCK;
+    if (k < 2) { for (let row = 0; row < 9; row++) for (let col = -1; col <= 1; col++) { const x = CX + col * 42 - 9, y = CY - 180 + row * 56; if (Math.abs(y + 14 - CY) < 30 && col === 0) continue; if (r() < .55) g.fillRect(x, y, 18, 26); }
+      for (const [x, y, w] of near) for (let row = 0; row < 6; row++) for (let col = 0; col < Math.floor(w / 50); col++) if (r() < .35) g.fillRect(x + 20 + col * 50, y + 26 + row * 58, 16, 24); }
+  },
+  key(c, tau, o) {
+    inkLine(c, [[CX - 77, H + 10], [CX - 77, CY - 211], [CX - 45, CY - 211], [CX - 45, CY - 251], [CX + 45, CY - 251], [CX + 45, CY - 211], [CX + 77, CY - 211], [CX + 77, H + 10]], 1.8, 5, { alpha: .6 });
+    inkLine(c, [[CX, CY - 251], [CX, CY - 296]], 2, 6); c.save(); c.fillStyle = PAL.ink; c.beginPath(); c.arc(CX, CY - 298, 3, 0, TAU); c.fill(); c.restore();
+    const win = roundRectPath(CX - 17, CY - 24, 34, 48, 1.5); goldLight(c, CX, CY, 0, 7, win);
+    c.save(); c.clip(win); figure(c, CX + 3, CY + 50, .44, { look: o.look || 0, hair: 'long' }, 8); c.restore();
+    inkLine(c, [[CX - 18, CY - 25], [CX + 18, CY - 25], [CX + 18, CY + 25], [CX - 18, CY + 25]], 2.2, 9, { close: true });
+    moonKey(c, CX + 330, CY - 360, 28, 11);
+  },
+};
+// 2 · the end of the pier, a lamp, the sea
+PLACES.pier = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 40],
+  plates(g, k) {
+    const hz = CY + 30; skyPlate(g, k, hz, { dawnX: CX + 170 }); seaPlate(g, k, hz, { dawnX: CX + 170, seed: 21 });
+    moonPlate(g, k, CX - 330, CY - 350, 24);
+    cloudPlate(g, k, CX - 240, CY - 170, 1, 22); cloudPlate(g, k, CX + 260, CY - 260, .7, 23);
+    if (k === 3) { glow(g, CX, CY, 120, .38, 10); g.save(); g.globalCompositeOperation = 'multiply'; g.fillStyle = linGrad(g, 0, CY + 96, 0, CY + 330, [[0, .5], [1, 0]]); g.fillRect(CX - 12, CY + 96, 24, 234); g.restore(); }
+  },
+  key(c, tau, o) {
+    const deckY = CY + 92;
+    inkFill(c, [[-40, H + 20], [330, H + 20], [CX + 70, deckY], [CX - 60, deckY]], 30);
+    // the posts under the deck, and their reflections
+    const r = rng(31); for (let i = 0; i < 9; i++) { const t = i / 8, x = lerp(-10, CX - 50, t) + 10, y = lerp(H - 10, deckY + 6, t), L = lerp(90, 22, t); inkLine(c, [[x, y], [x + 1, y + L]], lerp(10, 3, t), 32 + i); inkLine(c, [[x + 1, y + L + 6], [x + 2, y + L * 1.7]], lerp(5, 1.5, t), 50 + i, { alpha: .35 }); }
+    // the lamp post at the end
+    inkLine(c, [[CX, deckY], [CX, CY + 14]], 4, 33); inkFill(c, [[CX - 12, CY - 14], [CX + 12, CY - 14], [CX + 7, CY - 22], [CX - 7, CY - 22]], 34, { w: 1.2 });
+    goldLight(c, CX, CY, 11, 35); inkLine(c, [[CX - 12, CY + 14], [CX + 12, CY + 14]], 2.4, 36);
+    figure(c, CX + 40, deckY + 2, .6, { look: o.look || 0, coat: 'long' }, 37);
+    moonKey(c, CX - 330, CY - 350, 24, 38);
+  },
+};
+// 3 · a crossroads in open country
+PLACES.crossroads = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 30],
+  plates(g, k) {
+    const hz = CY + 60; skyPlate(g, k, hz, { dawnX: CX - 120 });
+    cloudPlate(g, k, CX + 230, CY - 230, 1.1, 41); cloudPlate(g, k, CX - 300, CY - 330, .8, 42);
+    const land = rectPath(-10, hz, W + 20, H - hz + 10);
+    cov(g, k, [0, 0, .1, .16], land);
+    if (k === 1) { g.fillStyle = gray(.18); g.beginPath(); g.moveTo(-10, hz + 4); for (let x = -10; x <= W + 10; x += 30) g.lineTo(x, hz - 8 - Math.sin(x / 140) * 12 - Math.sin(x / 57) * 5); g.lineTo(W + 10, hz + 4); g.fill(); }
+    // the road: wide at our feet, forking at the light, narrowing both ways to the horizon
+    const road = new Path2D(); road.moveTo(CX - 210, H + 10); road.bezierCurveTo(CX - 90, CY + 330, CX - 30, CY + 200, CX - 14, CY + 150); road.bezierCurveTo(CX - 80, CY + 120, CX - 300, CY + 90, CX - 560, hz + 6); road.lineTo(CX - 560, hz + 2); road.bezierCurveTo(CX - 300, hz + 12, CX - 60, CY + 110, CX, CY + 128);
+    road.bezierCurveTo(CX + 60, CY + 110, CX + 300, hz + 12, CX + 560, hz + 2); road.lineTo(CX + 560, hz + 6); road.bezierCurveTo(CX + 300, CY + 90, CX + 80, CY + 120, CX + 14, CY + 150); road.bezierCurveTo(CX + 30, CY + 200, CX + 90, CY + 330, CX + 210, H + 10); road.closePath();
+    g.fillStyle = KNOCK; g.fill(road);
+    if (k === 3) glow(g, CX, CY, 110, .38, 10);
+  },
+  key(c, tau, o) {
+    // grass along the road
+    const r = rng(43); c.save(); c.strokeStyle = PAL.ink; c.lineCap = 'round'; for (let i = 0; i < 120; i++) { const side = r() < .5 ? -1 : 1, f = r(), y = lerp(CY + 150, H, Math.pow(f, .8)), x = CX + side * lerp(40, 260, Math.pow(f, .9)) + side * r() * 280 * f; const L = lerp(8, 26, f); c.globalAlpha = .7; c.lineWidth = lerp(1, 2, f); c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r() - .5) * 8, y - L); c.stroke(); } c.restore();
+    // the signpost
+    inkLine(c, [[CX, CY + 132], [CX, CY + 14]], 4, 44);
+    inkFill(c, [[CX - 4, CY + 36], [CX - 58, CY + 36], [CX - 70, CY + 45], [CX - 58, CY + 54], [CX - 4, CY + 54]], 45, { w: 1.2 });
+    inkFill(c, [[CX + 4, CY + 60], [CX + 52, CY + 60], [CX + 64, CY + 69], [CX + 52, CY + 78], [CX + 4, CY + 78]], 46, { w: 1.2 });
+    goldLight(c, CX, CY, 11, 47); inkLine(c, [[CX - 10, CY + 13], [CX + 10, CY + 13]], 2.4, 48);
+    figure(c, CX - 44, CY + 200, .62, { look: o.look || 0, hair: 'bun' }, 49);
+  },
+};
+// 4 · a bench under a streetlamp, two people, a space between them
+PLACES.bench = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 80],
+  plates(g, k) {
+    const hz = CY + 250; skyPlate(g, k, hz, { dawnX: CX + 60 });
+    moonPlate(g, k, CX + 320, CY - 340, 24);
+    // a line of trees behind
+    const r = rng(51); const trees = new Path2D(); trees.moveTo(-20, hz + 10); for (let x = -20; x <= W + 40; x += 70) { const h = 150 + r() * 120; trees.arc(x, hz - h * .55, 60 + r() * 30, Math.PI, 0); } trees.lineTo(W + 40, hz + 10); trees.closePath();
+    cov(g, k, [0, .34, 0, 0], trees);
+    cov(g, k, [0, 0, .1, .12], rectPath(-10, hz, W + 20, H - hz + 10));
+    if (k === 3) { glow(g, CX, CY, 170, .42, 10); glow(g, CX, hz + 60, 230, .3, 10); }
+  },
+  key(c, tau, o) {
+    const ground = CY + 250, seat = ground - 40;
+    // the lamp behind the bench
+    inkLine(c, [[CX, ground - 16], [CX, CY + 18]], 4.5, 52); inkFill(c, [[CX - 18, CY - 16], [CX + 18, CY - 16], [CX + 8, CY - 30], [CX - 8, CY - 30]], 53, { w: 1.2 });
+    goldLight(c, CX, CY, 13, 54); inkLine(c, [[CX - 16, CY + 18], [CX + 16, CY + 18]], 2.6, 55);
+    // two people from behind, looking out, a space between them; the bench's back across them
+    figure(c, CX - 76, ground, 1, { sit: 3, look: o.look || 0, hair: 'long' }, 61);
+    figure(c, CX + 78, ground, 1.04, { sit: 3, look: o.look || 0, hair: 'short' }, 62);
+    inkFill(c, [[CX - 128, seat - 4], [CX + 128, seat - 4], [CX + 128, seat + 4], [CX - 128, seat + 4]], 56, { w: 1.2 });
+    inkLine(c, [[CX - 124, seat - 26], [CX + 124, seat - 26]], 6, 57); inkLine(c, [[CX - 124, seat - 44], [CX + 124, seat - 44]], 6, 58);
+    for (const x of [CX - 112, CX + 112]) inkLine(c, [[x, seat - 50], [x, ground + 2]], 5, 59 + x);
+    inkLine(c, [[CX - 104, seat + 4], [CX - 108, ground + 2]], 4, 64); inkLine(c, [[CX + 104, seat + 4], [CX + 108, ground + 2]], 4, 65);
+    moonKey(c, CX + 320, CY - 340, 24, 63);
+  },
+};
+// 5 · a station clock over the platform, a train going
+PLACES.clock = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 120],
+  plates(g, k) {
+    const hz = CY + 300; skyPlate(g, k, hz, { dawnX: CX - 200 });
+    // the train pulling out, right
+    const train = roundRectPath(CX + 150, CY + 120, W, 190, 26);
+    cov(g, k, [.34, 0, 0, 0], train);
+    g.fillStyle = KNOCK; if (k < 2) for (let i = 0; i < 6; i++) g.fillRect(CX + 200 + i * 90, CY + 150, 56, 46);
+    // the platform
+    cov(g, k, [0, .3, 0, 0], rectPath(-10, hz, W + 20, 40)); cov(g, k, [0, .06, .06, .08], rectPath(-10, hz + 40, W + 20, H - hz));
+    if (k === 3) glow(g, CX, CY, 160, .45, 20);
+  },
+  key(c, tau, o) {
+    const hz = CY + 300;
+    inkLine(c, [[-10, hz], [W + 10, hz]], 3, 70); inkLine(c, [[-10, hz + 40], [W + 10, hz + 40]], 2, 71);
+    for (let x = -30; x < W + 40; x += 60) inkLine(c, [[x, hz + 70], [x + 30, hz + 70]], 3, 72 + x);
+    // the canopy's edge and the bracket the clock hangs from
+    inkFill(c, [[-10, CY - 170], [W + 10, CY - 170], [W + 10, CY - 150], [-10, CY - 150]], 73);
+    inkLine(c, [[CX, CY - 150], [CX, CY - 52]], 4, 74);
+    // the clock: a gold face, ink hands (a minute before the hour, ticking on the twos)
+    goldLight(c, CX, CY, 46, 75);
+    c.save(); c.strokeStyle = PAL.ink; c.lineWidth = 3; wob(c, ellPts(CX, CY, 48, 48, 0, 40), 1.2, 77, true); c.restore();
+    c.save(); c.strokeStyle = PAL.ink; c.lineCap = 'round'; for (let h = 0; h < 12; h++) { const a = h / 12 * TAU; c.lineWidth = h % 3 ? 1.4 : 2.6; c.beginPath(); c.moveTo(CX + Math.cos(a) * 36, CY + Math.sin(a) * 36); c.lineTo(CX + Math.cos(a) * 43, CY + Math.sin(a) * 43); c.stroke(); }
+      const sec = Math.floor(tau * 12 / 2) * 6 / 60 * TAU - Math.PI / 2; c.lineWidth = 4; c.beginPath(); c.moveTo(CX, CY); c.lineTo(CX + Math.cos(-Math.PI / 2 - .1) * 32, CY + Math.sin(-Math.PI / 2 - .1) * 32); c.stroke();
+      c.lineWidth = 3; c.beginPath(); c.moveTo(CX, CY); c.lineTo(CX + Math.cos(Math.PI * .5 + .2) * 24, CY + Math.sin(Math.PI * .5 + .2) * 24); c.stroke();
+      c.strokeStyle = PAL.blood; c.lineWidth = 1.4; c.beginPath(); c.moveTo(CX, CY); c.lineTo(CX + Math.cos(sec) * 38, CY + Math.sin(sec) * 38); c.stroke(); c.restore();
+    figure(c, CX - 120, hz, .78, { look: .6 + (o.look || 0) * .4, coat: 'long', hair: 'short' }, 78);
+  },
+};
+// 6 · a doorway at dawn, someone on the threshold with a case
+PLACES.door = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 300],
+  plates(g, k) {
+    skyPlate(g, k, CY - 250, { dawnX: CX });
+    const wall = rectPath(-10, CY - 260, W + 20, H - CY + 270);
+    cov(g, k, [0, .1, .12, 0], wall);
+    // two windows, curtains drawn
+    for (const x of [CX - 300, CX + 190]) { cov(g, k, [0, 0, 0, 0], rectPath(x, CY - 150, 110, 150)); cov(g, k, [0, .28, null, null], rectPath(x + 8, CY - 142, 94, 134)); }
+    // the step, lit
+    cov(g, k, [0, 0, .24, .12], rectPath(-10, CY + 200, W + 20, H));
+    if (k === 3) { g.fillStyle = gray(.4); g.beginPath(); g.moveTo(CX - 90, CY + 200); g.lineTo(CX + 90, CY + 200); g.lineTo(CX + 230, H + 10); g.lineTo(CX - 230, H + 10); g.closePath(); g.fill(); }
+    if (k === 3) glow(g, CX, CY, 300, .45, 60);
+  },
+  key(c, tau, o) {
+    inkFill(c, [[-10, CY - 262], [W + 10, CY - 262], [W + 10, CY - 244], [-10, CY - 244]], 80);
+    const door = rectPath(CX - 70, CY - 150, 140, 350); goldLight(c, CX, CY, 0, 81, door);
+    inkLine(c, [[CX - 72, CY + 200], [CX - 72, CY - 152], [CX + 72, CY - 152], [CX + 72, CY + 200]], 4, 82);
+    inkFill(c, [[CX - 100, CY + 200], [CX + 100, CY + 200], [CX + 100, CY + 214], [CX - 100, CY + 214]], 83, { w: 1.2 });
+    for (const x of [CX - 300, CX + 190]) inkLine(c, [[x, CY - 150], [x + 110, CY - 150], [x + 110, CY], [x, CY]], 2.4, 84 + x, { close: true });
+    figure(c, CX - 8, CY + 200, .92, { look: o.look || 0, coat: 'long', hair: 'short' }, 85);
+    inkFill(c, [[CX + 20, CY + 200], [CX + 20, CY + 142], [CX + 66, CY + 142], [CX + 66, CY + 200]], 86, { w: 1.2 });
+    inkLine(c, [[CX + 34, CY + 142], [CX + 34, CY + 132], [CX + 52, CY + 132], [CX + 52, CY + 142]], 2.4, 87);
+  },
+};
+// 7 · a small boat on a wide sea
+PLACES.boat = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 110],
+  plates(g, k) {
+    const hz = CY - 60; skyPlate(g, k, hz, { dawnX: CX + 60 }); seaPlate(g, k, hz, { dawnX: CX + 60, seed: 91, glints: 110 });
+    moonPlate(g, k, CX - 320, CY - 330, 22);
+    if (k === 3) glow(g, CX, CY, 120, .38, 10);
+  },
+  key(c, tau, o) {
+    const bob = Math.round(Math.sin(tau * 2.2) * 2);
+    c.save(); c.translate(0, bob);
+    figure(c, CX + 58, CY + 78, .46, { sit: 1, look: o.look || 0, flip: 1, hair: 'short' }, 96);
+    inkFill(c, [[CX - 96, CY + 58], [CX + 104, CY + 58], [CX + 80, CY + 84], [CX - 74, CY + 84]], 92);
+    inkLine(c, [[CX, CY + 58], [CX, CY + 14]], 3.2, 93); goldLight(c, CX, CY, 10, 94); inkLine(c, [[CX - 9, CY - 12], [CX + 9, CY - 12]], 2, 95);
+    inkLine(c, [[CX + 20, CY + 40], [CX - 70, CY + 104]], 3, 97);
+    c.restore();
+    inkLine(c, [[CX - 110, CY + 92 + bob], [CX + 118, CY + 92 + bob]], 1.6, 98, { alpha: .45 });
+    moonKey(c, CX - 320, CY - 330, 22, 99);
+  },
+};
+// 8 · the top of a hill, a phone lit in someone's hands
+PLACES.hill = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 60],
+  plates(g, k) {
+    const hz = CY + 240; skyPlate(g, k, hz, { dawnX: CX - 240 });
+    moonPlate(g, k, CX - 250, CY - 300, 40);
+    const hill = new Path2D(); hill.moveTo(-10, CY + 190); hill.bezierCurveTo(CX - 300, CY + 120, CX - 120, CY + 36, CX + 20, CY + 42); hill.bezierCurveTo(CX + 180, CY + 48, CX + 360, CY + 170, W + 10, CY + 230); hill.lineTo(W + 10, H + 10); hill.lineTo(-10, H + 10); hill.closePath();
+    cov(g, k, [0, .38, 0, 0], hill);
+    if (k === 3) glow(g, CX, CY, 100, .42, 6);
+  },
+  key(c, tau, o) {
+    const r = rng(101); c.save(); c.strokeStyle = PAL.ink; c.lineCap = 'round'; c.globalAlpha = .75; for (let i = 0; i < 70; i++) { const t = r(), x = lerp(CX - 360, CX + 400, t), y = CY + 40 + Math.pow((x - CX - 20) / 400, 2) * 120 + r() * 6; c.lineWidth = 1.4; c.beginPath(); c.moveTo(x, y); c.lineTo(x + (r() - .5) * 6, y - 8 - r() * 12); c.stroke(); } c.restore();
+    figure(c, CX - 30 * .72, CY + 58 * .72, .72, { sit: 2, look: o.look || 0, hair: 'long' }, 102);
+    const ph = roundRectPath(CX - 7, CY - 11, 14, 22, 3); goldLight(c, CX, CY, 0, 103, ph);
+    moonKey(c, CX - 250, CY - 300, 40, 104);
+  },
+};
+// 9 · a stone bridge over the river
+const deckTop = x => { const t = (x + 10) / (W + 20); return CY + 90 - 160 * t * (1 - t); };
+PLACES.bridge = {
+  sky: [CX - 480, CY - 470, CX + 480, CY - 70],
+  plates(g, k) {
+    const hz = CY + 200; skyPlate(g, k, hz, { dawnX: CX + 220 }); seaPlate(g, k, hz, { dawnX: CX + 220, seed: 111, glints: 60, deep: .8 });
+    const r = rng(110), bank = new Path2D(); bank.moveTo(-10, hz + 2); for (let x = -10; x <= W + 30; x += 46) bank.arc(x, hz - 18 - r() * 26, 30 + r() * 16, Math.PI, 0); bank.lineTo(W + 30, hz + 2); bank.closePath();
+    cov(g, k, [0, .24, 0, 0], bank);
+    const body = new Path2D(); body.moveTo(-10, CY + 90); body.quadraticCurveTo(CX, CY + 10, W + 10, CY + 90); body.lineTo(W + 10, CY + 360); body.lineTo(CX + 240, CY + 360); body.bezierCurveTo(CX + 220, CY + 170, CX - 220, CY + 170, CX - 240, CY + 360); body.lineTo(-10, CY + 360); body.closePath();
+    cov(g, k, [0, .06, .2, .06], body);
+    if (k === 3) glow(g, CX, CY, 120, .38, 8);
+  },
+  key(c, tau, o) {
+    const top = [], rail = []; for (let x = -10; x <= W + 10; x += 20) { top.push([x, deckTop(x)]); rail.push([x, deckTop(x) - 26]); }
+    const arch = []; for (let a = 0; a <= 24; a++) arch.push(bez([CX - 240, CY + 360], [CX - 220, CY + 170], [CX + 220, CY + 170], [CX + 240, CY + 360], a / 24));
+    inkLine(c, arch, 3, 113);
+    // the lamp on the parapet, and someone leaning on it, looking down at the water
+    inkLine(c, [[CX, deckTop(CX)], [CX, CY + 13]], 3.4, 115); goldLight(c, CX, CY, 10, 116); inkLine(c, [[CX - 9, CY - 13], [CX + 9, CY - 13]], 2, 117);
+    figure(c, CX + 58, deckTop(CX + 58) + 1, .56, { look: o.look || 0, hair: 'bun', coat: 'short' }, 118);
+    inkLine(c, top, 4, 112); inkLine(c, rail, 3, 119);
+    for (let x = 6; x <= W; x += 38) inkLine(c, [[x, deckTop(x)], [x, deckTop(x) - 26]], 2.4, 114 + x);
+  },
+};
+// 10 · a lighthouse, its lamp just lit
+PLACES.lighthouse = {
+  sky: [CX - 480, CY - 470, CX + 480, CY + 60],
+  plates(g, k) {
+    const hz = CY + 170; skyPlate(g, k, hz, { dawnX: CX - 260 }); seaPlate(g, k, hz, { dawnX: CX - 260, seed: 121, glints: 70 });
+    // the beam across the sky
+    if (k === 3) { g.fillStyle = gray(.3); g.beginPath(); g.moveTo(CX, CY); g.lineTo(-10, CY - 220); g.lineTo(-10, CY - 80); g.closePath(); g.fill(); }
+    if (k === 1 || k === 0) { g.fillStyle = KNOCK; g.beginPath(); g.moveTo(CX, CY); g.lineTo(-10, CY - 220); g.lineTo(-10, CY - 80); g.closePath(); g.fill(); }
+    if (k === 3) glow(g, CX, CY, 120, .38, 10);
+    const tower = polyPath([[CX - 44, CY + 230], [CX + 44, CY + 230], [CX + 28, CY + 34], [CX - 28, CY + 34]]);
+    cov(g, k, [0, 0, 0, 0], tower);
+    if (k === 2) { g.save(); g.clip(tower); g.fillStyle = gray(.55); for (let y = CY + 60; y < CY + 240; y += 64) g.fillRect(CX - 60, y, 120, 32); g.restore(); }
+  },
+  key(c, tau, o) {
+    inkLine(c, [[CX - 44, CY + 230], [CX - 28, CY + 34], [CX + 28, CY + 34], [CX + 44, CY + 230]], 2.6, 122);
+    inkFill(c, [[CX - 40, CY + 34], [CX + 40, CY + 34], [CX + 40, CY + 24], [CX - 40, CY + 24]], 123, { w: 1.2 });
+    inkLine(c, [[CX - 20, CY + 24], [CX - 20, CY - 18]], 2.4, 124); inkLine(c, [[CX + 20, CY + 24], [CX + 20, CY - 18]], 2.4, 125);
+    goldLight(c, CX, CY, 13, 126);
+    inkFill(c, [[CX - 26, CY - 18], [CX + 26, CY - 18], [CX + 6, CY - 42], [CX - 6, CY - 42]], 127, { w: 1.2 });
+    inkFill(c, [[CX - 150, H + 10], [CX - 120, CY + 250], [CX - 60, CY + 222], [CX + 70, CY + 220], [CX + 170, CY + 262], [CX + 230, H + 10]], 128);
+    figure(c, CX + 118, CY + 242, .5, { look: o.look || 0, coat: 'long' }, 129);
+  },
+};
+// 11 · a field, a paper lantern let go
+PLACES.field = {
+  sky: [CX - 480, CY - 470, CX + 480, CY + 100],
+  plates(g, k) {
+    const hz = CY + 250; skyPlate(g, k, hz, { dawnX: CX + 140 });
+    cloudPlate(g, k, CX - 260, CY - 250, 1, 131);
+    cov(g, k, [0, 0, .06, .24], rectPath(-10, hz, W + 20, H - hz + 10));
+    if (k === 1) { g.fillStyle = gray(.14); g.beginPath(); g.moveTo(-10, hz + 2); for (let x = -10; x <= W + 10; x += 24) g.lineTo(x, hz - 14 - Math.sin(x / 90) * 8 - Math.sin(x / 31) * 4); g.lineTo(W + 10, hz + 2); g.fill(); }
+    if (k === 3) glow(g, CX, CY, 150, .42, 10);
+  },
+  key(c, tau, o) {
+    const r = rng(132); c.save(); c.strokeStyle = PAL.ink; c.lineCap = 'round';
+    for (let i = 0; i < 260; i++) { const f = r(), y = lerp(CY + 262, H + 20, Math.pow(f, .7)), x = r() * (W + 40) - 20, L = lerp(10, 44, f); c.globalAlpha = lerp(.35, .8, f); c.lineWidth = lerp(.8, 2.2, f); c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + (r() - .5) * 10, y - L * .6, x + (r() - .5) * 14, y - L); c.stroke(); } c.restore();
+    figure(c, CX - 6, CY + 340, .92, { arms: 'up', look: 1, coat: 'mid', hair: 'long' }, 133);
+    const rise = Math.round(tau * 12) / 12 * 14;
+    const lan = polyPath([[CX - 13, CY - 20 - rise], [CX + 13, CY - 20 - rise], [CX + 9, CY + 16 - rise], [CX - 9, CY + 16 - rise]]); goldLight(c, CX, CY - rise, 0, 134, lan);
+    inkLine(c, [[CX - 13, CY - 20 - rise], [CX + 13, CY - 20 - rise], [CX + 9, CY + 16 - rise], [CX - 9, CY + 16 - rise]], 1.6, 135, { close: true, alpha: .8 });
+  },
+};
+// 12 · a ring in its box
+PLACES.ring = {
+  plates(g, k) {
+    cov(g, k, [0, .12, .05, 0], rectPath(-10, -10, W + 20, H + 20));
+    cov(g, k, [0, 0, .12, .14], rectPath(-10, CY + 160, W + 20, H));
+    cov(g, k, [0, .34, 0, 0], polyPath([[CX - 150, CY - 40], [CX + 150, CY - 40], [CX + 172, CY - 262], [CX - 172, CY - 262]]));
+    cov(g, k, [0, .08, .52, 0], roundRectPath(CX - 158, CY - 40, 316, 150, 26));
+    if (k === 3) glow(g, CX, CY, 230, .45, 10);
+  },
+  key(c, tau, o) {
+    inkLine(c, [[CX - 160, CY - 40], [CX + 160, CY - 40], [CX + 182, CY - 272], [CX - 182, CY - 272]], 7, 160, { close: true });
+    inkFill(c, [[CX - 172, CY + 104], [CX + 172, CY + 104], [CX + 172, CY + 178], [CX - 172, CY + 178]], 161);
+    inkLine(c, [[CX - 166, CY - 40], [CX - 166, CY + 104]], 5, 162); inkLine(c, [[CX + 166, CY - 40], [CX + 166, CY + 104]], 5, 163);
+    // the band, standing in the slit of the cushion
+    c.save(); c.beginPath(); c.rect(CX - 100, CY - 60, 200, 124); c.clip();
+    c.lineWidth = 12; c.strokeStyle = PAL.goldDeep; c.beginPath(); c.ellipse(CX, CY + 46, 38, 42, 0, 0, TAU); c.stroke();
+    c.lineWidth = 8; c.strokeStyle = PAL.gold; c.beginPath(); c.ellipse(CX, CY + 46, 38, 42, 0, 0, TAU); c.stroke();
+    c.lineWidth = 2.2; c.strokeStyle = PAL.goldLit; c.beginPath(); c.ellipse(CX - 2, CY + 44, 36, 40, 0, Math.PI * 1.05, Math.PI * 1.55); c.stroke();
+    c.restore();
+    inkLine(c, [[CX - 76, CY + 64], [CX + 76, CY + 64]], 3.6, 164);
+    // the stone, the gold light
+    const stone = polyPath([[CX, CY - 22], [CX + 17, CY - 4], [CX, CY + 12], [CX - 17, CY - 4]]); goldLight(c, CX, CY, 0, 165, stone);
+    inkLine(c, [[CX - 17, CY - 4], [CX + 17, CY - 4]], 1.4, 166, { alpha: .7 }); inkLine(c, [[CX - 7, CY - 4], [CX, CY - 22], [CX + 7, CY - 4], [CX, CY + 12], [CX - 7, CY - 4]], 1.1, 167, { alpha: .6 });
+  },
+};
+const PLACE_ORDER = ['window', 'pier', 'crossroads', 'door', 'bench', 'clock', 'boat', 'hill', 'bridge', 'lighthouse', 'field', 'ring'];
+// how close we stand to each place: a camera zoom about the light
+const ZOOM = { window: 1.12, pier: 1.34, crossroads: 1.3, door: 1, bench: 1.34, clock: 1.18, boat: 1.55, hill: 1.3, bridge: 1.36, lighthouse: 1.15, field: 1.18, ring: 1 };
+const zoomAbout = (g, z) => { g.translate(CX, CY); g.scale(z, z); g.translate(-CX, -CY); };
+const _placeCache = {};
+function placeBase(name) {
+  const key = name + ':' + W + 'x' + H + '@' + S;
+  if (!_placeCache[key]) { const L = layer(), g = L.getContext('2d'); const saved = PAL; usePalette(FIRST_LIGHT); const z = ZOOM[name] || 1; risoPrint(g, (g, k) => { zoomAbout(g, z); PLACES[name].plates(g, k); }, { seed: PLACE_ORDER.indexOf(name) * 7 + 3 }); PAL = saved; _placeCache[key] = L; }
+  return _placeCache[key];
+}
+function drawPlace(c, name, tau, o = {}) {
+  usePalette(FIRST_LIGHT); blit(c, placeBase(name)); resetT(c);
+  c.save(); zoomAbout(c, ZOOM[name] || 1); PLACES[name].key(c, tau, o); if (name === 'window') birds(c, CX - 420, CY - 330, tau, 71); c.restore();
+  motes(c, CX, CY + (name === 'field' ? -Math.round(tau * 12) / 12 * 14 * (ZOOM.field || 1) : 0), tau, 90 + PLACE_ORDER.indexOf(name) * 13, (name === 'door' ? 26 : 16) * (o.stars ? 1.8 : 1), (name === 'door' ? 140 : 70) * (o.stars ? 1.4 : 1), o.stars ? 1.9 : 1);
+  if (o.stars && PLACES[name].sky) starsOver(c, PLACES[name], o.stars, 200 + PLACE_ORDER.indexOf(name) * 17, ZOOM[name] || 1);
+}
+
+// ===================== THE CARD AS AN OBJECT =====================
+// The reverse (CardArt.swift): a celestial rose pressed blind into the stock, a gold hairline, one sun of leaf.
+function backMarks() { if (!_marks._back) { const p = new Pen(21), cx = 113, cy = 200;
+  p.poly([[18, 18], [208, 18], [208, 382], [18, 382]], 1.1, 'ink', .7);
+  for (const [rad, w] of [[78, 1.0], [62, 1.5], [30, 1.1]]) p.ring(cx, cy, rad, w, 'ink', 1.1, 30);
+  p.rays(cx, cy, 30, 62, 12, 1.0, Math.PI / 12); p.poly([[cx, cy - 94], [cx + 94, cy], [cx, cy + 94], [cx - 94, cy]], .9, 'ink', .9);
+  for (const sy of [-1, 1]) { p.line(58, cy + sy * 130, 168, cy + sy * 130, .9, 'ink', .6); p.diamond(cx, cy + sy * 152, 5, 7, 1, 'ink', .4); }
+  _marks._back = p.marks; } return _marks._back; }
+function backGold() { if (!_marks._backGold) { const p = new Pen(22); p.poly([[11, 11], [215, 11], [215, 389], [11, 389]], .9, 'gold', .5); p.dot(113, 200, 11); _marks._backGold = p.marks; } return _marks._backGold; }
+function cardBack(c, seed = 3) {
+  const stock = roundRectPath(0, 0, CARD_W, CARD_H, 3); c.fillStyle = mix(PAL.paper, '#e9dfcb', .35); c.fill(stock);
+  grain(c, stock, [0, 0, CARD_W, CARD_H], 900, PAL.shade, .07, seed, .9);
+  // pressed, not printed: a lit lower wall and a shaded upper wall for every line
+  c.save(); c.translate(.7, .8); drawMarks(c, backMarks(), 1, { tint: alpha(PAL.light, .95) }); c.restore();
+  c.save(); c.translate(-.5, -.6); drawMarks(c, backMarks(), 1, { tint: alpha(PAL.shade, .24) }); c.restore();
+  drawMarks(c, backMarks(), 1, { tint: alpha(PAL.shade, .08) });
+  drawMarks(c, backGold(), 1);
+}
+// where a card's own gold is, in card space: the largest leaf on its face
+function goldOf(id) { const k = '_g' + id; if (!_marks[k]) { let best = null, area = -1; for (const m of artMarks(id)) if (m.fill === 'gold') { const b = markBox(m), a = b[2] * b[3]; if (a > area) { area = a; best = b; } } _marks[k] = best ? [113 - ART_W / 2 + best[0] + best[2] / 2, 176 - ART_H / 2 + best[1] + best[3] / 2] : [113, 176]; } return _marks[k]; }
+// a card on the table: its shadow hatched onto the paper, then the card, placed so that point `at` (card space) lands on (x, y)
+function placeCard(c, x, y, s, at, draw, o = {}) {
+  const { rot = 0, sx = 1 } = o;
+  c.save(); resetT(c); c.translate(x, y); c.rotate(rot); c.scale(s * sx, s); c.translate(-at[0], -at[1]);
+  if (!o.noShadow) { const sh = roundRectPath(7, 10, CARD_W, CARD_H, 3); hatch(c, sh, [0, 0, CARD_W + 20, CARD_H + 20], { angle: -.9, gap: 2.6, len: 7, jitter: 2, color: PAL.shade, alpha: .2, width: .7, seed: 17 }); }
+  draw(c); c.restore();
+}
+const cardScale = () => SHORT * .8 / CARD_H;
+// the height at which a card whose point `gy` (card space) is wanted at `y` stays whole on the frame, shadow and all
+function keepInFrame(y, gy, s, m = SHORT * .03) { const top = y - gy * s, bottom = y + (CARD_H + 10 - gy) * s; if (bottom > H - m) y -= bottom - (H - m); else if (top < m) y += m - top; return y; }
+
+// ===================== SCENES =====================
+// 1 · the questions: someone, somewhere, with a light. The first four ring like bowls; then faster.
+const MONTAGE = [['window', 1.5], ['pier', 1], ['crossroads', .75], ['door', .75], ['bench', .5], ['clock', .5], ['boat', 1 / 3], ['hill', 1 / 3], ['bridge', .25], ['lighthouse', .25], ['field', .25], ['ring', .25]];
+const placeScene = (name, k) => (c, tau, i) => { drawPlace(c, name, tau, {}); if (k < 4) bowlRings(c, CX, CY, tau, .08, 60 + k * 7, k === 0 ? 3 : 2); };
+
+// 2 · the hold: every place taken into the wheel's twelve houses, the wheel turns, and all of it goes into the light
+const _thumb = {};
+function placeThumb(name) {
+  if (!_thumb[name]) { const L = layer(), g = L.getContext('2d'); drawPlace(g, name, 0, {}); const T = layer(360, 360), tg = T.getContext('2d'); tg.imageSmoothingQuality = 'high';
+    const cut = SHORT * .62; tg.drawImage(L, (CX - cut / 2) * S, (CY - cut / 2) * S, cut * S, cut * S, 0, 0, T.width, T.height); _thumb[name] = T; }
+  return _thumb[name];
+}
+function sceneGather(c, tau, i) {
+  usePalette(FIRST_LIGHT); paper(c);
+  const grow = sm(0, .42, tau, easeOut), go = sm(.8, 1.42, tau, easeIn), z = 1 - go * .985, turn = -tau * .32 - go * .9;
+  const R = SHORT * .345 * z, n = SHORT * .98 * z;
+  // the engraved wheel, as it turns behind the app's table
+  c.save(); resetT(c); c.translate(CX, CY); c.rotate(turn); c.translate(-n / 2, -n / 2); c.scale(n / 1000, n / 1000); drawMarks(c, wheelMarks(1000), n / 1000, { tint: alpha(PAL.shade, .5 * (1 - go * .6)) }); c.restore();
+  // the twelve houses, each holding a place
+  PLACE_ORDER.forEach((name, k) => {
+    const a = turn + (k + .5) / 12 * TAU - Math.PI / 2, g = sm(k * .025, .25 + k * .025, tau, easeOut), br = SHORT * .07 * z * g; if (br < .5) return;
+    const x = CX + Math.cos(a) * R, y = CY + Math.sin(a) * R;
+    c.save(); resetT(c); c.beginPath(); c.arc(x, y, br, 0, TAU); c.clip(); c.drawImage(placeThumb(name), x - br, y - br, br * 2, br * 2); c.restore();
+    c.save(); resetT(c); c.strokeStyle = PAL.ink; c.lineWidth = 2.2 * Math.max(z, .3); wob(c, ellPts(x, y, br, br, 0, 30), 1, 300 + k, true); c.restore();
+  });
+  // the gold of every question, drawn in toward the centre
+  const r = rng(77);
+  if (go > 0) for (let m = 0; m < 90; m++) { const k = m % 12, a0 = turn + (k + .5) / 12 * TAU - Math.PI / 2 + (r() - .5) * .5, d0 = SHORT * (.3 + r() * .14), t = clamp(go * 1.15 - r() * .15, 0, 1), d = d0 * (1 - t), a = a0 + t * 2.2;
+    if (t >= 1) continue; c.save(); resetT(c); c.fillStyle = r() < .3 ? PAL.goldLit : PAL.gold; c.beginPath(); c.arc(CX + Math.cos(a) * d, CY + Math.sin(a) * d, 2 + r() * 2.5, 0, TAU); c.fill(); c.restore(); }
+  seedDot(c, CX, CY, 10 + go * 8, PAL.gold, PAL.goldDeep);
+}
+// 3 · the cut: one near-white frame
+function sceneFlash(c) { usePalette(FIRST_LIGHT); flash(c, tint(PAL.paper, .7)); }
+// 4 · the deck, riffled: every face goes by with its gold on the light, then the back, then the turn
+const RIFFLE = ['wheel', 'moon', 'lovers', 'tower', 'sun', 'hermit', 'death', 'magician', 'world', 'chariot', 'priestess', 'hanged', 'empress', 'devil', 'judgement', 'fool', 'temperance', 'strength'];
+const RIFFLE_HOLD = RIFFLE.map((_, k) => k < RIFFLE.length - 3 ? 1 : [2, 2, 3][k - RIFFLE.length + 3]);
+const RIFFLE_FRAMES = RIFFLE_HOLD.reduce((a, b) => a + b, 0), BACK_FRAMES = 5, FLIP_FRAMES = 4;
+const cardById = id => MAJORS.find(m => m.id === id);
+function sceneRiffle(c, tau, i) {
+  usePalette(CARD_STOCK); paper(c, PAL.sky, null, 9);
+  const f = Math.round(tau * FPS_DRAW), s = cardScale();
+  if (f < RIFFLE_FRAMES) { let k = 0, acc = 0; while (acc + RIFFLE_HOLD[k] <= f) { acc += RIFFLE_HOLD[k]; k++; } const id = RIFFLE[k], r = rng(500 + k);
+    placeCard(c, CX, keepInFrame(CY, goldOf(id)[1], s), s, goldOf(id), cc => cardFace(cc, cardById(id), 1, k + 3), { rot: (r() - .5) * .05 }); return; }
+  const b = f - RIFFLE_FRAMES;
+  if (b < BACK_FRAMES) { placeCard(c, CX, CY, s, [113, 200], cc => cardBack(cc)); return; }
+  // the turn: the back narrows to its edge, the face opens from it, blank, moving so its gold will sit on the light
+  const q = (b - BACK_FRAMES + 1) / (FLIP_FRAMES + 1), sx = Math.abs(Math.cos(q * Math.PI));
+  if (q < .5) placeCard(c, CX, CY, s, [113, 200], cc => cardBack(cc), { sx: Math.max(sx, .04) });
+  else placeCard(c, CX, CY, s, [113, 200], cc => cardFace(cc, cardById('star'), 0, 18), { sx: Math.max(sx, .04) });
+  goldLight(c, CX, CY, 11 * s, 19);
+}
+// 5 · the Star writes itself, gold cooling to ink
+function sceneStar(c, tau, i) {
+  usePalette(CARD_STOCK); paper(c, PAL.sky, null, 9);
+  const ink = sm(.1, 2.5, tau, t => t), push = lerp(1, 1.05, sm(0, 3, tau)), s0 = cardScale(), heart = goldOf('star'), hy = CY - (200 - heart[1]) * s0;
+  placeCard(c, CX, hy, s0 * push, heart, cc => cardFace(cc, cardById('star'), ink, 18));
+  const rise = sm(0, .5, tau, easeIO), hold = 1 - sm(.75, 1.25, tau);
+  if (hold > 0) { c.save(); c.globalAlpha = hold; goldLight(c, CX, lerp(CY, hy, rise), 11 * s0 * push, 19); c.restore(); }
+}
+// 6 · the sky answers: the same places, and the stars come out in the day
+const ANSWER = [['window', 1], ['pier', .75], ['boat', .75], ['hill', .5], ['crossroads', .5], ['lighthouse', .5]];
+const ANSWER_STARS = [[0, .55], [.25, .8], [.5, .95], [.7, 1], [.85, 1], [.95, 1]];   // how far the stars have come out, at the start and end of each shot
+const answerScene = (name, k) => (c, tau, i) => { const [a, b] = ANSWER_STARS[k]; drawPlace(c, name, tau, { stars: lerp(a, b, tau / ANSWER[k][1]), look: 1 }); };
+// 7 · the name, over the first-light sky printed as the places are: each letter laid in gold that cools to ink;
+//     then, once, the title's light passes across it, as it does in the app (Title in RootView.swift)
+const WORD_LAYER = layer(), _signSky = {};
+function signSky() {
+  const key = W + 'x' + H + '@' + S;
+  if (!_signSky[key]) { const L = layer(), g = L.getContext('2d'), saved = PAL; usePalette(FIRST_LIGHT);
+    risoPrint(g, (g, k) => { skyPlate(g, k, H, { dawnX: CX }); if (k === 3) glow(g, CX, CY, SHORT * .46, .2, 10); }, { seed: 97 });
+    PAL = saved; _signSky[key] = L; }
+  return _signSky[key];
+}
+function sceneSignoff(c, tau, i) {
+  usePalette(CARD_STOCK); blit(c, signSky()); resetT(c);
+  const word = 'ARCANA', size = SHORT * .1, track = size * .3;
+  c.save(); resetT(c); c.font = `bold ${size}px ${DIDOT}`; c.letterSpacing = track + 'px'; c.textBaseline = 'alphabetic'; c.textAlign = 'left';
+  const widths = [...word].map(ch => c.measureText(ch).width), full = widths.reduce((a, b) => a + b, 0) - track, cap = c.measureText(word).actualBoundingBoxAscent;
+  const x0 = CX - full / 2, base = CY + cap / 2;
+  const at = []; { let x = x0; for (const w of widths) { at.push(x); x += w; } }
+  for (let k = 0; k < word.length; k++) { const t0 = .12 + k * .11, a = sm(t0, t0 + .12, tau, easeOut), cool = sm(t0 + .1, t0 + .7, tau); if (a <= 0) continue;
+    if (cool < 1) { c.globalAlpha = a; c.fillStyle = PAL.gold; c.fillText(word[k], at[k], base); }
+    c.globalAlpha = a * cool; c.fillStyle = PAL.ink; c.fillText(word[k], at[k], base); }
+  c.restore();
+  // the light: a band of gold drawn across the letters on a slant, clear, gold, clear
+  const p = (tau - 1.5) / 1.35; if (p <= 0 || p >= 1) return;
+  const g = WORD_LAYER.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, WORD_LAYER.width, WORD_LAYER.height);
+  resetT(g); g.font = `bold ${size}px ${DIDOT}`; g.letterSpacing = track + 'px'; g.textBaseline = 'alphabetic'; g.textAlign = 'left'; g.fillStyle = '#000';
+  for (let k = 0; k < word.length; k++) g.fillText(word[k], at[k], base);
+  const bw = full, bh = cap * 1.25, top = base - cap * 1.1, u = lerp(-.35, 1.35, p);
+  const gr = g.createLinearGradient(x0 + (u - .2) * bw, top + .1 * bh, x0 + (u + .2) * bw, top + .9 * bh);
+  gr.addColorStop(0, alpha(PAL.gold, 0)); gr.addColorStop(.5, alpha(PAL.gold, .95)); gr.addColorStop(1, alpha(PAL.gold, 0));
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = gr; g.fillRect(x0 - size, top - size, full + size * 2, cap + size * 2);
+  blit(c, WORD_LAYER);
+}
+
+// ===================== SHEETS (for review, ?sheets=1) =====================
+function scenePlacesSheet(c, tau, i, stars = 0) {
+  usePalette(FIRST_LIGHT); paper(c); const L = layer(); const g = L.getContext('2d');
+  PLACE_ORDER.forEach((name, k) => { drawPlace(g, name, .6, { stars, look: stars }); const col = k % 4, row = Math.floor(k / 4); c.save(); resetT(c); c.drawImage(L, col * W / 4 + 4, row * H / 3 + 4, W / 4 - 8, H / 3 - 8); c.restore(); });
+}
+function sceneDeckSheet(c, tau, i) {
+  usePalette(CARD_STOCK); paper(c);
+  const cols = 6, s = Math.min(W / (cols * CARD_W * 1.12), H / (4 * CARD_H * 1.08));
+  MAJORS.forEach((card, k) => { const col = k % cols, row = Math.floor(k / cols); c.save(); resetT(c); c.translate((col + .5) * W / cols - CARD_W * s / 2, 12 + row * CARD_H * s * 1.06); c.scale(s, s); cardFace(c, card, 1, k + 1); c.restore(); });
+}
+
+// ===================== SCORE =====================
+// The app's own sounds (Sfx.swift), rebuilt for Web Audio: struck singing bowls that beat, chimes on the
+// C-major pentatonic, a drone that breathes every ten seconds, the swell of the held question, card stock.
+// Every cue is read off the timeline, so the sound lands on the cuts.
+const midiHz = m => 440 * Math.pow(2, (m - 69) / 12);
+function renderBuf(ac, dur, f) { const sr = ac.sampleRate, n = Math.ceil(dur * sr), b = ac.createBuffer(2, n, sr), L = b.getChannelData(0), R = b.getChannelData(1); for (let i = 0; i < n; i++) { const [l, r] = f(i / sr); L[i] = l; R[i] = r; } return b; }
+const Synth = {
+  // a struck bowl: one pure partial and a few inharmonic ones, each split in two so it beats, the halves leaning to opposite ears
+  bowl(ac, midi, dark = false) {
+    const f0 = midiHz(midi), ratios = [1, 2.0, 2.71, 4.13, 5.40];
+    const amps = dark ? [1, .10, .20, .05, .025] : [1, .12, .40, .15, .10], decays = dark ? [.40, 1.0, .9, 1.7, 2.3] : [.55, 1.4, 1.1, 2.1, 2.9], beats = dark ? [.6, 1.0, 1.7, 2.3, 2.9] : [1.0, 1.6, 2.3, 3.2, 3.9];
+    const r = new AppRng(midi * 7 + (dark ? 3 : 1)), ph = ratios.map(() => r.next() * TAU), attack = dark ? .014 : .003;
+    return renderBuf(ac, dark ? 6.5 : 5.5, t => { let l = 0, rr = 0; for (let k = 0; k < 5; k++) { const f = f0 * ratios[k]; if (f >= 14000) continue; const env = amps[k] * Math.exp(-t * decays[k]), a = Math.sin(TAU * (f - beats[k] / 2) * t + ph[k]), b = Math.sin(TAU * (f + beats[k] / 2) * t + ph[k] * 1.7); l += env * (a * .64 + b * .36); rr += env * (a * .36 + b * .64); } const s = (1 - Math.exp(-t / attack)) * .24; return [l * s, rr * s]; });
+  },
+  chime(ac, midi) { const f = midiHz(midi), tame = 1 / Math.max(1, Math.sqrt(f / 400)); return renderBuf(ac, 1.7, t => { const env = Math.exp(-t * 2.8) * (1 - Math.exp(-t / .0025)), v = Math.sin(TAU * f * t) + .16 * Math.sin(TAU * 2 * f * t) * Math.exp(-t * 3) + .06 * Math.sin(TAU * 2.76 * f * t) * Math.exp(-t * 7), s = v * env * .22 * tame; return [s, s]; }); },
+  // C2 G2 C3 G3, breathing on a ten-second period, the right ear a hair sharp so it turns slowly
+  drone(ac, dur) { const loop = 20, q = f => Math.round(f * loop) / loop, twin = 3 / loop, voices = [[q(midiHz(36)), .30], [q(midiHz(43)), .16], [q(midiHz(48)), .12], [q(midiHz(55)), .05]], harm = [1, .5, .28, .14];
+    return renderBuf(ac, dur, t => { const breath = .5 - .5 * Math.cos(t * TAU / 10), sw = .72 + .28 * breath; let l = 0, r = 0; for (let vi = 0; vi < 4; vi++) { const [f, a] = voices[vi], s = vi === 0 ? 1 : sw; for (let h = 0; h < 4; h++) { const fh = f * (h + 1), g = a * harm[h] * s; l += g * Math.sin(TAU * fh * t); r += g * Math.sin(TAU * (fh + twin) * t); } } return [l * .36, r * .36]; }); },
+  // the held question: an open chord rising out of wind, quickening
+  swell(ac, hold) { const parts = [[midiHz(60), .30], [midiHz(67), .22], [midiHz(72), .18], [midiHz(76), .12], [midiHz(79), .10], [midiHz(84), .07]], nl = new AppRng(301), nr = new AppRng(302); let lpl = 0, lpr = 0;
+    return renderBuf(ac, hold + .5, t => { const rise = t < hold ? Math.pow(t / hold, 2.2) : Math.exp(-(t - hold) * 7), trem = 1 + .22 * Math.sin(TAU * (3 + 4 * Math.min(t, hold) / hold) * t); let l = 0, r = 0; parts.forEach(([f, a], i) => { const d = .8 + i * .35; l += a * Math.sin(TAU * (f - d / 2) * t); r += a * Math.sin(TAU * (f + d / 2) * t); }); const cut = .015 + .10 * Math.min(t, hold) / hold; lpl += ((nl.next() * 2 - 1) - lpl) * cut; lpr += ((nr.next() * 2 - 1) - lpr) * cut; const e = rise * trem; return [(l * .34 + lpl * .5) * e * .5, (r * .34 + lpr * .5) * e * .5]; }); },
+  noise(ac, dur, decay, cutoff, bite, seed = 77) { const r = new AppRng(seed); let lp = 0; return renderBuf(ac, dur, t => { const w = r.next() * 2 - 1; lp += (w - lp) * cutoff; const v = (lp * (1 - bite) + w * bite) * Math.exp(-t * decay) * (1 - Math.exp(-t / .002)) * .5; return [v, v]; }); },
+  thud(ac) { const r = new AppRng(1031); let lp = 0; return renderBuf(ac, .26, t => { const w = r.next() * 2 - 1; lp += (w - lp) * .06; const v = (lp * Math.exp(-t * 18) * .7 + Math.sin(TAU * 92 * t) * Math.exp(-t * 26) * .35) * .8; return [v, v]; }); },
+  riffle(ac) { const r = new AppRng(515), offs = []; let at = 0; for (let k = 0; k < 11; k++) { at += .028 + r.next() * .042; offs.push(at); } const n = new AppRng(909); let lp = 0; return renderBuf(ac, at + .2, t => { let env = 0; for (const o of offs) if (t >= o) env = Math.max(env, Math.exp(-(t - o) * 70)); const w = n.next() * 2 - 1; lp += (w - lp) * .4; const v = lp * env * .34; return [v, v]; }); },
+};
+// a room: a convolver with a seeded, exponentially dying stereo tail
+function reverbRoom(ac, secs, decay, seed, bright = .5) { const n = Math.ceil(secs * ac.sampleRate), b = ac.createBuffer(2, n, ac.sampleRate); for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch), r = rng(seed + ch); let lp = 0; for (let i = 0; i < n; i++) { const t = i / ac.sampleRate, w = r() * 2 - 1; lp += (w - lp) * (bright * Math.exp(-t * 1.5) + .05); d[i] = lp * Math.exp(-t * decay); } } const cv = ac.createConvolver(); cv.buffer = b; return cv; }
+function sceneStart(name) { let acc = 0; for (const s of TIMELINE) { if (s.name === name) return acc; acc += s.dur; } return null; }
+function score(ac, t0, dest) {
+  const DUR = FILM.DUR, master = ac.createGain(); master.connect(dest);
+  master.gain.setValueAtTime(.5, t0); master.gain.setValueAtTime(.5, t0 + DUR - 1.4); master.gain.linearRampToValueAtTime(0, t0 + DUR);
+  // two rooms, as in the app: the air (bowls, chimes, the swell) in a cathedral, the hand (card stock) in a small room
+  const air = ac.createGain(), hall = reverbRoom(ac, 4.5, 1.5, 11, .35), wet = ac.createGain(); wet.gain.value = .9; air.connect(hall); hall.connect(wet); wet.connect(master); const dry = ac.createGain(); dry.gain.value = .62; air.connect(dry); dry.connect(master);
+  const hand = ac.createGain(), small = reverbRoom(ac, .7, 7, 21, .6), hwet = ac.createGain(); hwet.gain.value = .25; hand.connect(small); small.connect(hwet); hwet.connect(master); hand.connect(master);
+  const play = (buf, t, g = 1, bus = air, pan = 0) => { if (t == null) return; const s = ac.createBufferSource(); s.buffer = buf; const e = ac.createGain(); e.gain.value = g; s.connect(e); let out = e; if (pan) { const p = ac.createStereoPanner(); p.pan.value = pan; e.connect(p); out = p; } out.connect(bus); s.start(t0 + Math.max(0, t)); };
+  const cache = {}, bowl = (m, dark = false) => cache['b' + m + dark] || (cache['b' + m + dark] = Synth.bowl(ac, m, dark)), chime = m => cache['c' + m] || (cache['c' + m] = Synth.chime(ac, m));
+  const cut = sceneStart('flash'), star = sceneStart('star'), sign = sceneStart('signoff'), gather = sceneStart('gather'), rs = sceneStart('riffle');
+  // the drone rises under the questions, swells into the cut and is cut with the deck; it comes back under the Star
+  const drone = ac.createBufferSource(); drone.buffer = Synth.drone(ac, DUR + .5); const dg = ac.createGain(); drone.connect(dg); dg.connect(master); const G = dg.gain;
+  G.setValueAtTime(0, t0); G.linearRampToValueAtTime(.42, t0 + 1.6); G.setValueAtTime(.42, t0 + gather); G.linearRampToValueAtTime(.6, t0 + cut); G.linearRampToValueAtTime(0, t0 + cut + .05);
+  G.setValueAtTime(0, t0 + star); G.linearRampToValueAtTime(.34, t0 + star + 1.4); G.setValueAtTime(.34, t0 + sign + .8); G.linearRampToValueAtTime(0, t0 + DUR); drone.start(t0);
+  // the questions: the first four ring as bowls, then a chime on every cut, rising and quickening
+  const notes = [60, 64, 67, 69, 72, 74, 76, 79, 81, 84, 86, 88];
+  MONTAGE.forEach(([n], k) => { const t = sceneStart(n); if (k < 4) play(bowl(notes[k]), t + .02, k ? .95 : 1.35, air, [0, -.25, .25, 0][k]); else play(chime(notes[k]), t, .85, air, k % 2 ? .3 : -.3); });
+  play(bowl(48), .02, .6);
+  // the hold: the swell rises to the cut
+  play(Synth.swell(ac, cut - gather), gather, 2.1);
+  // the cut: the deck riffled, and a low, dark bowl under it
+  play(Synth.riffle(ac), cut, 1.3, hand); play(bowl(48, true), cut, 1.2);
+  // the riffle: card stock at every change, slowing; the back lands; the turn
+  const tick = Synth.noise(ac, .06, 62, .32, .5), slide = Synth.noise(ac, .3, 14, .1, .18), thud = Synth.thud(ac);
+  let acc = 0; RIFFLE_HOLD.forEach((h, k) => { play(tick, rs + acc / 12, .5 + (k % 3) * .12, hand, ((k * 37) % 7 - 3) / 10); acc += h; });
+  play(thud, rs + RIFFLE_FRAMES / 12, 1.1, hand); play(slide, rs + (RIFFLE_FRAMES + BACK_FRAMES) / 12, 1, hand);
+  // the Star: its bowl as the pen begins, a second as the gold lands, the chord of a spread as the ink cools
+  play(bowl(67), star + .1, 1); play(bowl(76), star + 1.25, .55, air, .2);
+  for (const m of [60, 67, 76]) play(bowl(m), star + 2.6, .5);
+  // the sky answers: a chime for every star that comes out
+  for (const [m, g] of [[60, .5], [64, .4], [67, .42], [72, .5]]) play(bowl(m), sceneStart('answer-window') + .02, g);
+  ANSWER.forEach(([name, dur], k) => { const t = sceneStart('answer-' + name), a = ANSWER_STARS[k][0], b = ANSWER_STARS[k][1], n = 16;
+    for (let j = 0; j < n; j++) { const at = j / n * .72; if (at < a || at > b) continue; play(chime([84, 86, 88, 91, 93][(j + k) % 5]), t + (at - a) / Math.max(b - a, 1e-3) * dur, .5, air, ((j * 53) % 9 - 4) / 8); } });
+  // the name: the long chord
+  for (const [m, g] of [[48, .7], [60, .6], [67, .5], [76, .4]]) play(bowl(m, m === 48), sign + .1, g);
+}
+
+// ===================== FILM =====================
+// t (s)   dur    scene        look    what happens                                              sound
+// 0.00    1.50   window       riso    a city at first light, one window lit; it rings           bowl C4, the drone rises
+// 1.50    1.00   pier         riso    the end of a pier, a lamp, someone facing the sea         bowl E4
+// 2.50    0.75   crossroads   riso    a signpost at a fork in the road                          bowl G4
+// 3.25    0.75   door         riso    a doorway lit gold, someone on the step with a case       bowl A4
+// 4.00    2.67   montage      riso    bench, clock, boat, hill, bridge, lighthouse, field,      a chime on each cut, rising,
+//                                     ring: faster and faster                                   quickening
+// 6.67    1.50   gather       paper   every place into the wheel's twelve houses; the wheel     the swell
+//                                     turns and all of it goes into the light
+// 8.17    0.08   flash        paper   the cut                                                   the riffle, a low bowl
+// 8.25    2.58   riffle       ink     the deck riffles past, slows; the back; the turn          ticks slowing, a thud, a slide
+// 10.83   3.00   star         ink     the Star writes itself in gold that cools to ink          the Star's bowl, then the chord
+// 13.83   4.00   answer       riso    the places again; stars come out in the day sky           a chime for every star
+// 17.83   3.50   signoff      riso    ARCANA laid letter by letter; the title's light passes     the long chord, the drone breathes out
+const TIMELINE = [
+  ...(new URLSearchParams(location.search).has('sheets') ? [
+    { name: 'places', dur: .5, fn: (c, tau, i) => scenePlacesSheet(c, tau, i, 0) },
+    { name: 'placesStars', dur: .5, fn: (c, tau, i) => scenePlacesSheet(c, tau, i, 1) },
+    { name: 'deck', dur: .5, fn: sceneDeckSheet }] : []),
+  // (the first shot is a hair short so every later cut lands on its own first drawn frame, not the frame before)
+  ...MONTAGE.map(([name, dur], k) => ({ name, dur: k ? dur : dur - 1e-9, fn: placeScene(name, k) })),
+  { name: 'gather', dur: 1.5, fn: sceneGather },
+  { name: 'flash', dur: 1 / 12, fn: sceneFlash },
+  { name: 'riffle', dur: (RIFFLE_FRAMES + BACK_FRAMES + FLIP_FRAMES) / 12, fn: sceneRiffle },
+  { name: 'star', dur: 3, fn: sceneStar },
+  ...ANSWER.map(([name, dur], k) => ({ name: 'answer-' + name, dur, fn: answerScene(name, k) })),
+  { name: 'signoff', dur: 3.5, fn: sceneSignoff },
+];
+defineFilm({ timeline: TIMELINE, score, format: { ar: '1:1' } });
+</script>

@@ -1,0 +1,8 @@
+{
+  "name": "arcana-film",
+  "private": true,
+  "type": "module",
+  "description": "Renders Arcana's launch film (arcana.html) to frames, a score and an mp4.",
+  "scripts": { "render": "./make.sh" },
+  "dependencies": { "puppeteer-core": "^25" }
+}

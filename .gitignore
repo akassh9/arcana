@@ -15,3 +15,7 @@ _original/Arcana.app/
 
 # wrangler dev's local state
 .wrangler/
+
+# the launch film's renders and its node modules
+film/out/
+film/node_modules/
