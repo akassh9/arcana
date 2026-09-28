@@ -17,7 +17,7 @@ extension Notification.Name {
 /// A key as the page gives it: named in small capitals, or drawn.
 enum LegendKey: Hashable {
   case named(String)
-  case left, right, up, command, delete
+  case left, right, up, command, delete, comma
 
   /// What VoiceOver says for it.
   var spoken: String {
@@ -28,6 +28,7 @@ enum LegendKey: Hashable {
     case .up: return "up arrow"
     case .command: return "command"
     case .delete: return "delete"
+    case .comma: return "comma"
     }
   }
 }
@@ -46,6 +47,7 @@ struct LegendLine: Hashable {
     LegendLine(keys: [.up], does: "past readings"),
     LegendLine(keys: [.command, .delete], does: "forget a reading"),
     LegendLine(keys: [.named("esc")], does: "back"),
+    LegendLine(keys: [.command, .comma], does: "settings"),
   ]
 
   var spoken: String { (word.map { [$0] } ?? keys.map(\.spoken)).joined(separator: " ") }
@@ -247,7 +249,8 @@ private struct Drawn: Shape {
   }
 }
 
-/// The signs on the keys that have no name: the arrows, command and delete.
+/// The signs on the keys that have no name: the arrows, command, delete and
+/// the comma.
 private enum KeySigns {
   static let space = CGSize(width: 10, height: 10)
 
@@ -291,6 +294,13 @@ private enum KeySigns {
     d.line(5.0, 3.6, 7.6, 6.4, w: 1, amp: 0.06)
     d.line(7.6, 3.6, 5.0, 6.4, w: 1, amp: 0.06)
     out[.delete] = d.marks
+
+    // ,: a drop of ink, filled ring within ring, with a short tail; a comma
+    // set in type would all but vanish
+    var m = Pen(seed: 707)
+    for r in [1.25, 0.8, 0.35] { m.ring(5.0, 4.9, r, w: 1, amp: 0.03, segs: 10) }
+    m.line(6.2, 5.3, 4.5, 8.4, w: 1, amp: 0.06)
+    out[.comma] = m.marks
     return out
   }()
 }

@@ -73,6 +73,7 @@ moon is back where it was, the question you asked comes back beneath it.
 | `esc` | let go / take back what you wrote / close the card / start over / back to tonight, as do `↓` and the moon itself |
 | `m` | sound on/off. Before the ask it is a letter; the bowl, top right, always works |
 | `?` or `⌘/`, or the key, top left | the keys: the few the room has, on one page. `esc` or a click closes them. Before the ask `?` is a letter; `⌘/`, which is Help ▸ The Keys, and the key always work |
+| `⌘,` | Settings, which is Arcana ▸ Settings…: the OpenAI key that finds the thread |
 
 Cards land reversed about 42% of the time; the art turns with them, an oxblood
 diamond appears under the title, and the card's bowl sounds an octave lower in
