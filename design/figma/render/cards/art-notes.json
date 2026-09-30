@@ -1,0 +1,1386 @@
+{
+ "fool": {
+  "what_it_shows": "A step off the measured ledge. Five hand-ruled stair steps descend left to right over a hatched block (the ledger, the known), while a single line strikes up and away to the right into open space, ending in a small oxblood diamond. Above, a gold sun sits in a wobbling ring of twelve short rays, framed by an oxblood diamond outline. Feels like a figure-less leap: order on the left, open air on the right.",
+  "gold": "gold = the sun, top right (art 126,74 -> card 146,126).",
+  "gold_detail": [
+   "GOLD: leaf disc r12 at (126,74) (bbox x114-138 y62-86), ink outline 0.8"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r19 around the sun, w 1.0",
+   "oxblood filled diamond r5 at (168,150), the end of the leap"
+  ],
+  "anatomy": [
+   "staircase: 5 steps, each a 16 pt tread + 22 pt riser, from (18,92) down to (98,202), w 1.6",
+   "hatch block under the stairs: x18-98, y114-226, gap 6, angle -1.0 rad, w 0.6",
+   "sun ring r30 at (126,74), w 1.5, 24 segments, jitter 1.4",
+   "12 rays r34-46 around (126,74), w 0.9",
+   "GOLD: leaf disc r12 at (126,74) (bbox x114-138 y62-86), ink outline 0.8",
+   "oxblood diamond outline r19 around the sun, w 1.0",
+   "the leap: line (100,196) to (168,150), w 1.4",
+   "oxblood filled diamond r5 at (168,150), the end of the leap",
+   "48 pen marks; returned blank keeps 13 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:69"
+ },
+ "magician": {
+  "what_it_shows": "The radiant eye, compass of will. Eighteen long rays burst from the centre almost to the frame (they overrun the art window horizontally), a hand-drawn ring and an oxblood diamond compass around a gold almond eye with an ink pupil. Also the source of the (fallback) app icon mark.",
+  "gold": "gold = the eye, dead centre.",
+  "gold_detail": [
+   "GOLD: eye (six-point almond) rx25 ry11 at centre (bbox x67-117 y112-136), ink outline 0.8"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r52, w 1.1"
+  ],
+  "anatomy": [
+   "18 rays r6-108 from centre, w 1.6 (horizontal ones reach art x -15 and 201, i.e. past the window edges to the heavy border)",
+   "ring r46, w 1.6, 26 segments",
+   "oxblood diamond outline r52, w 1.1",
+   "GOLD: eye (six-point almond) rx25 ry11 at centre (bbox x67-117 y112-136), ink outline 0.8",
+   "ink pupil dot r5.7",
+   "22 pen marks; returned blank keeps 20 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:85"
+ },
+ "priestess": {
+  "what_it_shows": "The sealed door between pillars. Two heavy pillars with block capitals and bases stand either side of a finely hatched veil/door; on the veil, four small oxblood diamond outlines in a cross around a gold diamond; below, a gold crescent moon (a gold disc bitten by a paper-coloured disc). Quiet, withheld.",
+  "gold": "gold = the veil diamond and the crescent (2 golds + a paper cut; leaf keeps all three).",
+  "gold_detail": [
+   "GOLD 1: filled diamond rx9 ry12 at (93,106), centre of the cross",
+   "GOLD 2: disc r19 at (93,176) with ink outline, cut by a paper #F3EDE0 disc offset +13 in x -> crescent, lit limb left"
+  ],
+  "oxblood": [
+   "four oxblood diamond outlines rx6 ry8 at (93,84), (73,106), (113,106), (93,128), w 1.0"
+  ],
+  "anatomy": [
+   "pillars at x38 and x148, y46-208, w 2.6; capitals 24x10 at y38-48, bases 28x10 at y206-216, w 1.5",
+   "door/veil rectangle x48-138, y56-204, w 1.4, with near-vertical hatch (angle 1.45 rad, gap 5, w 0.7)",
+   "lintel line y56, w 1.8",
+   "four oxblood diamond outlines rx6 ry8 at (93,84), (73,106), (113,106), (93,128), w 1.0",
+   "GOLD 1: filled diamond rx9 ry12 at (93,106), centre of the cross",
+   "GOLD 2: disc r19 at (93,176) with ink outline, cut by a paper #F3EDE0 disc offset +13 in x -> crescent, lit limb left",
+   "36 pen marks; returned blank keeps 8 pressed marks and 3 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:93"
+ },
+ "empress": {
+  "what_it_shows": "Sown ground, one seed waking. Six gently bowed furrows fill the lower half; above, a gold seed-sun in a ring of eight short rays sends up two curling stems with leaf loops, meeting over a small oxblood bud diamond.",
+  "gold": "gold = the seed/sun, upper centre.",
+  "gold_detail": [
+   "GOLD: disc r20 at (93,104) (bbox x73-113 y84-124)"
+  ],
+  "oxblood": [
+   "oxblood filled diamond r7 at (93,52)"
+  ],
+  "anatomy": [
+   "6 furrows from y150 to y220 (14 pt apart) across x10-176, bow depth 7..2, w 1.2",
+   "GOLD: disc r20 at (93,104) (bbox x73-113 y84-124)",
+   "ring r30 at (93,104), w 1.5; 8 rays r32-42 offset pi/8, w 1.2",
+   "two stems from (93,104) curving to (59,52)/(127,52), w 1.5, each with a leaf loop, w 1.2",
+   "oxblood filled diamond r7 at (93,52)",
+   "21 pen marks; returned blank keeps 20 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:112"
+ },
+ "emperor": {
+  "what_it_shows": "The iron seat, squared and squared again. Two nested squares divided into quadrants by a cross; a solid gold block (the seat/throne) at the centre with an oxblood diamond on it; two diagonal quadrants hatched; four short diagonal ticks at the corners.",
+  "gold": "gold = the central block.",
+  "gold_detail": [
+   "GOLD: rectangle 36x56 x75-111 y96-152"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r11 at centre, w 1.1"
+  ],
+  "anatomy": [
+   "outer rect x28-158, y40-208, w 2.0; inner rect x42-144, y54-194, w 1.2",
+   "cross: vertical x93 y54-194 and horizontal y124 x42-144, w 1.5",
+   "GOLD: rectangle 36x56 x75-111 y96-152",
+   "oxblood diamond outline r11 at centre, w 1.1",
+   "hatch top-left quadrant x44-86 y56-98 and bottom-right x100-142 y150-192, gap 5, angle -0.7, w 0.6",
+   "4 diagonal rays r78-92 at 45 deg, w 1.6",
+   "32 pen marks; returned blank keeps 8 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:136"
+ },
+ "hierophant": {
+  "what_it_shows": "Three arches, two keys. Three nested half-arches (a sanctuary) above two pillars on a floor line; two crossed keys hang from the centre with ring bows; a gold diamond sits where the keys meet, inside an oxblood diamond outline.",
+  "gold": "gold = the diamond at the keys' crossing.",
+  "gold_detail": [
+   "GOLD: filled diamond rx15 ry19 at (93,108)"
+  ],
+  "oxblood": [
+   "oxblood diamond outline rx22 ry27 at (93,108), w 1.0"
+  ],
+  "anatomy": [
+   "3 arches (half-ellipses, squash 0.62) centred y44/62/80, radii 52/38/24, w 1.6",
+   "pillars at x41 and x145, y44-200, w 1.8; floor y200 x31-155, w 1.8",
+   "keys: lines (93,120) to (59,186) and (127,186), w 1.6; ring bows r8 at the ends, w 1.4; wards at y150/146, w 1.2",
+   "GOLD: filled diamond rx15 ry19 at (93,108)",
+   "oxblood diamond outline rx22 ry27 at (93,108), w 1.0",
+   "14 pen marks; returned blank keeps 12 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:149"
+ },
+ "lovers": {
+  "what_it_shows": "Two circles, one shared almond. Two overlapping rings make a vesica; the shared almond between them is solid gold. Above, a small oxblood diamond in a crown of seven rays; below, a hatched ground.",
+  "gold": "gold = the shared almond.",
+  "gold_detail": [
+   "GOLD: almond polygon (93,92)-(109,132)-(93,172)-(77,132)"
+  ],
+  "oxblood": [
+   "7 rays r22-40 around (93,34), offset 0.12 pi, w 1.2; oxblood diamond outline r12 at (93,34), w 1.2"
+  ],
+  "anatomy": [
+   "rings r48 at (67,132) and (119,132), w 1.7",
+   "GOLD: almond polygon (93,92)-(109,132)-(93,172)-(77,132)",
+   "7 rays r22-40 around (93,34), offset 0.12 pi, w 1.2; oxblood diamond outline r12 at (93,34), w 1.2",
+   "ground line y190 x14-172, w 1.3; hatch x14-172 y192-216, gap 5, angle -0.9, w 0.6",
+   "39 pen marks; returned blank keeps 11 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:172"
+ },
+ "chariot": {
+  "what_it_shows": "Hub, spokes, forward momentum. A wheel of two rings and ten spokes with twenty ticks round its rim, a gold hub in an oxblood diamond; three road curves sweep beneath it; two short level dashes at the top read as reins/horizon.",
+  "gold": "gold = the hub.",
+  "gold_detail": [
+   "GOLD: hub disc r11 at (93,118)"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r16, w 1.0"
+  ],
+  "anatomy": [
+   "rings r54 (w 2.0) and r44 (w 1.0) at (93,118)",
+   "10 spokes r10-44, w 1.4",
+   "GOLD: hub disc r11 at (93,118)",
+   "oxblood diamond outline r16, w 1.0",
+   "20 ticks at r58, length 6, w 0.8",
+   "3 road curves across x26-160: ends at y183/195/207, each dipping 12 pt at the centre (to y195/207/219), w 1.5/1.25/1.0",
+   "two dashes y42 x24-60 and x126-162, w 1.4",
+   "39 pen marks; returned blank keeps 15 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:183"
+ },
+ "strength": {
+  "what_it_shows": "The lemniscate, held without force. A hand-drawn figure-eight (two jittered loops) inside a ring of sixteen soft rays, a small gold point at the crossing, and oxblood diamonds above and below.",
+  "gold": "gold = the crossing of the figure-eight.",
+  "gold_detail": [
+   "GOLD: disc r8 at centre"
+  ],
+  "oxblood": [
+   "oxblood filled diamonds r8 at (93,32) and (93,216)"
+  ],
+  "anatomy": [
+   "two loops rx30 ry26 centred at (63,124) and (123,124), w 2.0, extra jitter 1.1",
+   "GOLD: disc r8 at centre",
+   "ring r64, w 1.2; 16 rays r66-86, w 0.9",
+   "oxblood filled diamonds r8 at (93,32) and (93,216)",
+   "22 pen marks; returned blank keeps 5 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:199"
+ },
+ "hermit": {
+  "what_it_shows": "One lamp, one road. A tall staff topped with an oxblood diamond stands beside a six-sided lantern; the lantern's flame is a gold diamond throwing nine short rays; the ground below is a ruled line with a hatched field.",
+  "gold": "gold = the lamp flame, left of centre.",
+  "gold_detail": [
+   "GOLD: flame diamond (80,104)-(89,118)-(80,128)-(71,118)"
+  ],
+  "oxblood": [
+   "staff x137, y34-214, w 2.4; oxblood filled diamond r7 at its top (137,34)"
+  ],
+  "anatomy": [
+   "staff x137, y34-214, w 2.4; oxblood filled diamond r7 at its top (137,34)",
+   "lantern hexagon (59,72) (101,72) (109,96) (109,132) (51,132) (51,96), w 1.8; crossbar y96, w 1.2; hanger x80 y60-72, w 1.4",
+   "GOLD: flame diamond (80,104)-(89,118)-(80,128)-(71,118)",
+   "9 rays r30-46 around (80,116), offset 0.08 pi, w 0.9",
+   "ground y190 x10-176, w 1.5; hatch x10-176 y192-226, gap 6, angle -1.1, w 0.7",
+   "43 pen marks; returned blank keeps 6 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:216"
+ },
+ "wheel": {
+  "what_it_shows": "The turning rim. A great wheel of three rings, eight spokes and thirty-two rim ticks with a gold hub and an inner square-diamond; four oxblood diamonds at the cardinal points (the left and right ones straddle the art window rule). The sky answers this card (As Above: the engraved wheel turns one house).",
+  "gold": "gold = the hub.",
+  "gold_detail": [
+   "GOLD: hub disc r13"
+  ],
+  "oxblood": [
+   "4 oxblood filled diamonds r8 on an ellipse 88 (x) x 100 (y): (181,124) (93,224) (5,124) (93,24)"
+  ],
+  "anatomy": [
+   "rings r74 (w 2.0), r62 (w 1.0), r26 (w 1.5) at centre",
+   "8 spokes r26-62, offset pi/8, w 1.6",
+   "32 ticks at r76, length 7",
+   "GOLD: hub disc r13",
+   "4 oxblood filled diamonds r8 on an ellipse 88 (x) x 100 (y): (181,124) (93,224) (5,124) (93,24)",
+   "inner diamond poly with vertices +-44, w 1.0",
+   "49 pen marks; returned blank keeps 14 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:231"
+ },
+ "justice": {
+  "what_it_shows": "The level beam. A post and level beam carry two shallow pans; a gold diamond at the pivot; an oxblood diamond outline on top of the post; a short base with hatching.",
+  "gold": "gold = the fulcrum.",
+  "gold_detail": [
+   "GOLD: diamond rx13 ry15 at the pivot (93,84)"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r10 at (93,44), w 1.2"
+  ],
+  "anatomy": [
+   "post x93 y44-206, w 2.2; beam y84 x27-159, w 2.0",
+   "hangers x27 and x159, y84-118, w 1.2; pans: curve dipping to y142, w 1.6; rims w 1.2",
+   "GOLD: diamond rx13 ry15 at the pivot (93,84)",
+   "oxblood diamond outline r10 at (93,44), w 1.2",
+   "base y206 x53-133, w 2.0; hatch x53-133 y208-230",
+   "26 pen marks; returned blank keeps 10 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:246"
+ },
+ "hanged": {
+  "what_it_shows": "Sight, inverted. A gallows beam; a rope drops to an inverted triangle (the body upside down), hatched inside; below its point a gold head in a ring. Reversed, the card reads the right way up - the art is built upside down on purpose.",
+  "gold": "gold = the head, low centre.",
+  "gold_detail": [
+   "GOLD: disc r12 at (93,196), ring r20 around it, w 1.2"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r12 at (93,138), w 1.1"
+  ],
+  "anatomy": [
+   "beam y46 x22-164, w 2.2; uprights to y76, w 1.6",
+   "rope x93 y46-108, w 1.4",
+   "inverted triangle (53,108) (133,108) (93,182), w 2.0; hatch inside, gap 6, angle 1.1, w 0.6",
+   "GOLD: disc r12 at (93,196), ring r20 around it, w 1.2",
+   "oxblood diamond outline r12 at (93,138), w 1.1",
+   "19 pen marks; returned blank keeps 6 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:262"
+ },
+ "death": {
+  "what_it_shows": "The clean horizon. A long horizon; a gold half-sun sits on it with nine rays (some drop below the line); seven vertical strokes stand beneath like stubble or reflections; a wide arc overhead peaks in an oxblood diamond; a hatched field at the foot.",
+  "gold": "gold = the half sun on the horizon.",
+  "gold_detail": [
+   "GOLD: half-disc (chord) r40 centred (93,148), bbox x53-133 y108-148"
+  ],
+  "oxblood": [
+   "arc (26,96)-(93,58)-(160,96), w 1.8; oxblood filled diamond r8 at (93,58)"
+  ],
+  "anatomy": [
+   "horizon y148 x8-178, w 2.2",
+   "GOLD: half-disc (chord) r40 centred (93,148), bbox x53-133 y108-148",
+   "9 rays r44-62 around (93,148), offset pi, w 1.2",
+   "7 verticals at x22 + 24i from y152, lengths 26/34/42 repeating, w 1.4",
+   "arc (26,96)-(93,58)-(160,96), w 1.8; oxblood filled diamond r8 at (93,58)",
+   "hatch x8-178 y196-228, gap 7, angle -1.2, w 0.6",
+   "45 pen marks; returned blank keeps 19 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:275"
+ },
+ "temperance": {
+  "what_it_shows": "The measured pour. Two triangles (an hourglass of two cups) meet at a gold block; five oxblood drops zig-zag down into the lower vessel; a faint ring holds the whole.",
+  "gold": "gold = the waist block.",
+  "gold_detail": [
+   "GOLD: rectangle x78-108 y118-134"
+  ],
+  "oxblood": [
+   "5 oxblood filled diamonds r3.2 at y140..188 (12 apart), x alternating 88/98"
+  ],
+  "anatomy": [
+   "top triangle (51,52) (135,52) (93,120), bottom (51,200) (135,200) (93,132), w 1.9; rims y52 and y200, w 1.2",
+   "GOLD: rectangle x78-108 y118-134",
+   "5 oxblood filled diamonds r3.2 at y140..188 (12 apart), x alternating 88/98",
+   "hatch in the upper vessel x67-119 y58-90, gap 6, angle 0.9, w 0.55",
+   "ring r60 at (93,126), w 0.9",
+   "20 pen marks; returned blank keeps 9 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:294"
+ },
+ "devil": {
+  "what_it_shows": "The chain one chose. A horned trapezoid body with a gold eye; hatching below the eye; four loose chain links hang either side; a small oxblood diamond at the foot.",
+  "gold": "gold = the eye.",
+  "gold_detail": [
+   "GOLD: eye rx22 ry10 at (93,112), ink pupil r5.2"
+  ],
+  "oxblood": [
+   "oxblood diamond outline r9 at (93,196), w 1.2"
+  ],
+  "anatomy": [
+   "body (49,76) (137,76) (123,176) (63,176), w 2.0; horns curve out and up from the top corners, w 1.8",
+   "GOLD: eye rx22 ry10 at (93,112), ink pupil r5.2",
+   "hatch x63-123 y132-170, gap 5, angle -0.9, w 0.6",
+   "chain: 4 squashed rings r8 (squash 0.7) at x26 and x160, y150..210, w 1.3",
+   "oxblood diamond outline r9 at (93,196), w 1.2",
+   "27 pen marks; returned blank keeps 13 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:308"
+ },
+ "tower": {
+  "what_it_shows": "The bolt, and after. A tall tapering tower with a battlement and three floors; a gold lightning bolt strikes down into its top with five spark rays; four oxblood diamonds fall on either side, each trailing a short line.",
+  "gold": "gold = the bolt.",
+  "gold_detail": [
+   "GOLD: bolt (smooth closed zig-zag) from (97,26) down to (109,104), bbox x79-115 y23-104"
+  ],
+  "oxblood": [
+   "4 oxblood filled diamonds r6 at (30,120) (156,150) (36,186) (152,196), each with a trail line 16-7 pt above, w 0.9"
+  ],
+  "anatomy": [
+   "tower (61,74) (125,74) (131,212) (55,212), w 2.1; battlement (53,58) (133,58) (125,74) (61,74), w 1.6",
+   "3 floor lines at y108/142/176, w 1.0",
+   "GOLD: bolt (smooth closed zig-zag) from (97,26) down to (109,104), bbox x79-115 y23-104",
+   "5 spark rays r26-40 around (93,40), offset -0.85 pi, w 1.1",
+   "4 oxblood filled diamonds r6 at (30,120) (156,150) (36,186) (152,196), each with a trail line 16-7 pt above, w 0.9",
+   "19 pen marks; returned blank keeps 6 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:323"
+ },
+ "star": {
+  "what_it_shows": "Water under starlight. An eight-point star (four long arms, four short diagonals) with a gold heart, a ring and an oxblood diamond; four small pen crosses (sparkles) around it; five ripples of water below. The sky answers this card (As Above: the sky's glints are held lit).",
+  "gold": "gold = the star's heart.",
+  "gold_detail": [
+   "GOLD: disc r15 at (93,96)"
+  ],
+  "oxblood": [
+   "ring r24, w 1.2; oxblood diamond outline r32, w 0.9"
+  ],
+  "anatomy": [
+   "8 arms from (93,96): long 74 at the cardinals (w 1.7), short 40 on the diagonals (w 1.2), first arm points up",
+   "GOLD: disc r15 at (93,96)",
+   "ring r24, w 1.2; oxblood diamond outline r32, w 0.9",
+   "ripples: 5 lines from y180, 11 apart, inset 14+5i, w 1.1",
+   "4 sparkle crosses (+-6 arms, w 0.9) at (34,52) (152,62) (28,130) (156,126)",
+   "24 pen marks; returned blank keeps 9 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:343"
+ },
+ "moon": {
+  "what_it_shows": "The long tide, two towers. A gold crescent (a gold disc bitten by a paper disc, which also erases the right side of the surrounding ring) inside a crown of 24 ticks; two small towers with pointed roofs and oxblood windows; a dashed path down the middle to two ripples of water. The sky answers this card (As Above: lilac half-light).",
+  "gold": "gold = the crescent (1 gold + 1 paper cut).",
+  "gold_detail": [
+   "GOLD: disc r32 at (99,88) with ink outline, cut by a paper disc shifted +16 (and stretched 10%) -> crescent, lit limb left"
+  ],
+  "oxblood": [
+   "towers at x36 and x150: bodies 24x56 (y150-206), w 1.6; roofs to y134, w 1.4; oxblood filled windows r5 at y168"
+  ],
+  "anatomy": [
+   "ring r44 at (93,88), w 1.6 (its right side is covered by the paper cut)",
+   "GOLD: disc r32 at (99,88) with ink outline, cut by a paper disc shifted +16 (and stretched 10%) -> crescent, lit limb left",
+   "24 ticks at r48, length 7",
+   "towers at x36 and x150: bodies 24x56 (y150-206), w 1.6; roofs to y134, w 1.4; oxblood filled windows r5 at y168",
+   "path: 7 dashes x93 from y152, 11 apart, 6 long, w 1.6",
+   "ripples: 2 lines from y224, 9 apart",
+   "42 pen marks; returned blank keeps 14 pressed marks and 2 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:362"
+ },
+ "sun": {
+  "what_it_shows": "Unshaded noon. A large gold sun disc in a heavy ring, with twelve long and twelve short rays interleaved; a gold eye painted on the disc; a ruled ground with hatching; oxblood diamonds in the two top corners. The sky answers this card (As Above: the dawn rises).",
+  "gold": "gold = the big sun disc (and the eye on it).",
+  "gold_detail": [
+   "GOLD 1: disc r40 at (93,104) (bbox x53-133 y64-144), plus ring r40, w 1.2",
+   "GOLD 2: eye rx22 ry10 on the disc with ink pupil - painted on the leaf, so it sinks with the ink on return"
+  ],
+  "oxblood": [
+   "oxblood filled diamonds r7 at (22,34) and (164,34)"
+  ],
+  "anatomy": [
+   "12 long rays r56-92 (w 1.8) + 12 short rays r56-76 offset pi/12 (w 1.0) around (93,104)",
+   "ring r52, w 2.0",
+   "GOLD 1: disc r40 at (93,104) (bbox x53-133 y64-144), plus ring r40, w 1.2",
+   "GOLD 2: eye rx22 ry10 on the disc with ink pupil - painted on the leaf, so it sinks with the ink on return",
+   "ground y214 x10-176, w 1.6; hatch x10-176 y216-238, gap 6, angle -1.2, w 0.7",
+   "oxblood filled diamonds r7 at (22,34) and (164,34)",
+   "59 pen marks; returned blank keeps 18 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:382"
+ },
+ "judgement": {
+  "what_it_shows": "The sounding call. A horn/bell shape opens at the top; beneath it a gold diamond (the note) radiates eight short rays; three horizontal strata narrow downward; two figures' arms (curves) rise from the ground, each topped with an oxblood diamond; hatched earth at the foot.",
+  "gold": "gold = the sounding note under the horn.",
+  "gold_detail": [
+   "GOLD: diamond rx13 ry17 at (93,104)"
+  ],
+  "oxblood": [
+   "two rising curves from (35,206)/(151,206) to (59,136)/(127,136), w 1.5; oxblood filled diamonds r6 at (59,130) and (127,130)"
+  ],
+  "anatomy": [
+   "bell (63,26) (123,26) (104,92) (82,92), w 2.0; rim y26 x59-127, w 1.6; band y58 x75-111, w 1.0",
+   "GOLD: diamond rx13 ry17 at (93,104)",
+   "8 rays r20-34, offset pi/8, w 1.0",
+   "3 strata at y152/178/204, inset 20/28/36, w 1.8/1.5/1.2",
+   "two rising curves from (35,206)/(151,206) to (59,136)/(127,136), w 1.5; oxblood filled diamonds r6 at (59,130) and (127,130)",
+   "hatch x20-166 y208-232, gap 6, angle -1.1, w 0.7",
+   "42 pen marks; returned blank keeps 9 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:396"
+ },
+ "world": {
+  "what_it_shows": "The circle closed. A slightly tall wreath of two rings bound by 26 diagonal strokes; a gold world at the centre crossed by a plus and an oxblood diamond; four oxblood corner diamonds, each with four little rays (the four living creatures as stars).",
+  "gold": "gold = the world at the centre.",
+  "gold_detail": [
+   "GOLD: disc r24 at centre"
+  ],
+  "oxblood": [
+   "cross +-34, w 1.4; oxblood diamond outline r34, w 1.1",
+   "4 oxblood filled diamonds r9 at (17,20) (169,20) (17,228) (169,228), each with 4 rays r12-22 at 45 deg, w 1.0 (they sit close to the frame's corner brackets)"
+  ],
+  "anatomy": [
+   "wreath rings r74 (w 2.2) and r66 (w 0.9), squash 1.06",
+   "26 binding strokes between r66/70 and r74/78, w 1.1",
+   "GOLD: disc r24 at centre",
+   "cross +-34, w 1.4; oxblood diamond outline r34, w 1.1",
+   "4 oxblood filled diamonds r9 at (17,20) (169,20) (17,228) (169,228), each with 4 rays r12-22 at 45 deg, w 1.0 (they sit close to the frame's corner brackets)",
+   "52 pen marks; returned blank keeps 7 pressed marks and 1 leaf marks"
+  ],
+  "source": "Sources/Arcana/CardArt.swift:415"
+ },
+ "cups-ace": {
+  "what_it_shows": "Follows: RWS Ace of Cups: a hand from a cloud holds a cup overflowing in five streams into a lotus pool. Drawn: One big chalice, brimming: a fan of seven rays of light rises from above its rim; its water runs over the rim in two doubled streams down either side into a pool of three ripples.",
+  "gold": "The water in the bowl (full cup) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral I",
+   "art (186×248): One big chalice, brimming: a fan of seven rays of light rises from above its rim; its water runs over the rim in two doubled streams down either side into a pool of three ripples.",
+   "gold: The water in the bowl (full cup) — 1 gold.",
+   "oxblood: none",
+   "bottom band: ACE OF CUPS / The Brimming Cup"
+  ],
+  "geometry": "Rays: 7 lines centred (93,64), angles −150°→−30°, from r30 to r52/r44 alternating, w 1.0. Cup Spot(93,136, s 140) full → rim y≈66, bowl x 45–141, base y 206, w 2.1. Streams: each side two curves (93±46,67)→(±55,80)→(±58,120)→(±57,170)→(±56,211), inner copy 5 pt inward, w 1.0 / 0.8. Pool: ripples at y 214, 3 rows, gap 9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:239-257"
+ },
+ "cups-2": {
+  "what_it_shows": "Follows: RWS Two of Cups: two lovers pledge cups; a winged lion's head over a caduceus between them. Drawn: Two cups tilted toward each other as if clinking; above them, where they meet, a gold spark in a star of eight rays; a ground line with hatching.",
+  "gold": "The spark: gold diamond rx 6.5 ry 8.5 at (93,62) — 1 gold (stands in for the caduceus/lion).",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral II",
+   "art (186×248): Two cups tilted toward each other as if clinking; above them, where they meet, a gold spark in a star of eight rays; a ground line with hatching.",
+   "gold: The spark: gold diamond rx 6.5 ry 8.5 at (93,62) — 1 gold (stands in for the caduceus/lion).",
+   "oxblood: none",
+   "bottom band: TWO OF CUPS / The Answered Cup"
+  ],
+  "geometry": "Cups s 100 at (50,146) tilt +0.16 rad (9.2°) and (136,146) tilt −0.16. Rays: 8, r 11→25, offset π/8, w 0.9. Ground line y 206 x18→168 w 1.3; hatch 18,208 150×22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:259-266"
+ },
+ "cups-3": {
+  "what_it_shows": "Follows: RWS Three of Cups: three women raise cups in a dance of celebration. Drawn: Three cups raised together: the outer two tilted inward, the centre one higher and upright; a smaller gold spark above; ground and hatching.",
+  "gold": "Spark diamond rx 5.5 ry 7.5 at (93,58) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral III",
+   "art (186×248): Three cups raised together: the outer two tilted inward, the centre one higher and upright; a smaller gold spark above; ground and hatching.",
+   "gold: Spark diamond rx 5.5 ry 7.5 at (93,58) — 1 gold.",
+   "oxblood: none",
+   "bottom band: THREE OF CUPS / The Shared Toast"
+  ],
+  "geometry": "Cups s 78: (35,158) tilt +0.25 rad (14.3°), (151,158) tilt −0.25, (93,140) upright. Rays 8, r 9→20 at (93,58). Ground as the Two. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:268-276"
+ },
+ "cups-4": {
+  "what_it_shows": "Follows: RWS Four of Cups: a man sits under a tree, arms crossed, before three cups, ignoring a fourth offered by a hand from a cloud. Drawn: Three cups standing on the ground in a row; above, alone in a wobbly halo with twelve rays, the fourth — full, offered, overlooked.",
+  "gold": "The offered cup's water — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IV",
+   "art (186×248): Three cups standing on the ground in a row; above, alone in a wobbly halo with twelve rays, the fourth — full, offered, overlooked.",
+   "gold: The offered cup's water — 1 gold.",
+   "oxblood: none",
+   "bottom band: FOUR OF CUPS / The Overlooked Cup"
+  ],
+  "geometry": "Halo ring r 40 at (93,74), wobble amp 1.5, w 0.9; 12 rays r 44→54, offset π/12, w 0.8. Offered cup s 54 at (93,76) full. Ground cups s 56 at x 41, 93, 145, y 176. Ground line y 204 x14→172 w 1.4; hatch 14,206 158×24. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:278-285"
+ },
+ "cups-5": {
+  "what_it_shows": "Follows: RWS Five of Cups: a cloaked figure mourns three spilled cups; two cups still stand behind him. Drawn: Two cups still standing at the top, both full of gold; below on the ground three knocked over — two lying on their sides with their rims to the card edges, each letting fall three red drops, and one upside down between them.",
+  "gold": "Both standing cups are full — 2 golds (exception to 'about one gold').",
+  "gold_detail": [],
+  "oxblood": [
+   "Six oxblood drops (three per lying cup)."
+  ],
+  "anatomy": [
+   "top band: roman numeral V",
+   "art (186×248): Two cups still standing at the top, both full of gold; below on the ground three knocked over — two lying on their sides with their rims to the card edges, each letting fall three red drops, and one upside down between them.",
+   "gold: Both standing cups are full — 2 golds (exception to 'about one gold').",
+   "oxblood: Six oxblood drops (three per lying cup).",
+   "bottom band: FIVE OF CUPS / The Spilled Three"
+  ],
+  "geometry": "Standing cups s 66 at (61,82) and (125,82), full. Lying cups s 48 at (47,190) a = −(π/2+0.08) and (139,190) a = +(π/2+0.08), each + spill(). Upturned cup s 48 at (93,182), a = π. Ground line y 207 x12→174 w 1.4; hatch 12,209 162×18. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:287-300"
+ },
+ "cups-6": {
+  "what_it_shows": "Follows: RWS Six of Cups: children in an old garden; cups filled with flowers, one handed from the boy to the girl. Drawn: Six cups in two rows of three, each with a five-petal flower standing on a stem above its rim; one flower — bottom row, middle — has a gold heart: the one given.",
+  "gold": "The bottom-middle flower's heart (gold dot r 3.2) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VI",
+   "art (186×248): Six cups in two rows of three, each with a five-petal flower standing on a stem above its rim; one flower — bottom row, middle — has a gold heart: the one given.",
+   "gold: The bottom-middle flower's heart (gold dot r 3.2) — 1 gold.",
+   "oxblood: none",
+   "bottom band: SIX OF CUPS / The Old Garden"
+  ],
+  "geometry": "Cups s 50 at x 43, 93, 143; rows y 100 and 192. Stem from rim (0,−0.54) up 18 pt (w 0.9); flower r 9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:302-312"
+ },
+ "cups-7": {
+  "what_it_shows": "Follows: RWS Seven of Cups: seven cups float in clouds, each holding a vision. Drawn: Four cups above a long scalloped cloud bank, three more rising out of a second bank below; only the middle cup of the lower three is full: 'one of them real'.",
+  "gold": "The middle lower cup's water — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VII",
+   "art (186×248): Four cups above a long scalloped cloud bank, three more rising out of a second bank below; only the middle cup of the lower three is full: 'one of them real'.",
+   "gold: The middle lower cup's water — 1 gold.",
+   "oxblood: none",
+   "bottom band: SEVEN OF CUPS / Cups in the Clouds"
+  ],
+  "geometry": "Top cups s 48 at x 33, 73, 113, 153, y 74; cloud (93, top 100, half-width 84). Lower cups s 48 at x 47, 93, 139, y 170 (the 93 one full); cloud (93, 196, 74). The clouds are paper-filled so the cups rise out of them. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:314-322"
+ },
+ "cups-8": {
+  "what_it_shows": "Follows: RWS Eight of Cups: a figure walks away from eight stacked cups toward the mountains under a waning/eclipsed moon. Drawn: Eight cups stacked five below and three above with a gap in the upper row (something missing); behind them a line of mountains; a gold crescent moon, waning, in the upper right. No figure: the leaving is implied.",
+  "gold": "The crescent moon — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VIII",
+   "art (186×248): Eight cups stacked five below and three above with a gap in the upper row (something missing); behind them a line of mountains; a gold crescent moon, waning, in the upper right. No figure: the leaving is implied.",
+   "gold: The crescent moon — 1 gold.",
+   "oxblood: none",
+   "bottom band: EIGHT OF CUPS / The Quiet Leaving"
+  ],
+  "geometry": "Ridge polyline (16,116)(40,92)(58,106)(84,76)(112,102)(134,88)(170,116), w 1.0. Crescent (133,46) r 15 bite 9. Cups s 40: lower row x 37, 65, 93, 121, 149 at y 182; upper row x 51, 79, 135 at y 141 (gap at 107). Ground line y 203 w 1.4; hatch 12,205 162×22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:324-334"
+ },
+ "cups-9": {
+  "what_it_shows": "Follows: RWS Nine of Cups: a contented man sits with arms folded before nine cups on a curved shelf — the 'wish card'. Drawn: A full shelf: three shelves, three cups on each, each shelf a line with two bracket ticks; the centre cup is the one full of gold.",
+  "gold": "The centre cup's water — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IX",
+   "art (186×248): A full shelf: three shelves, three cups on each, each shelf a line with two bracket ticks; the centre cup is the one full of gold.",
+   "gold: The centre cup's water — 1 gold.",
+   "oxblood: none",
+   "bottom band: NINE OF CUPS / The Wish Granted"
+  ],
+  "geometry": "Shelves y 91, 153, 215 (line x22→164 w 1.5; ticks at x 26 and 160 down 6). Cups s 48 at x 49, 93, 137, centred 25 above each shelf (y 65, 127, 189). (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:336-345"
+ },
+ "cups-10": {
+  "what_it_shows": "Follows: RWS Ten of Cups: a rainbow of ten cups arcs over a happy family and their home. Drawn: Ten small cups on a rainbow (two concentric half-arcs) over a small house with one lit window; ground and hatching.",
+  "gold": "The lit window — gold rect 10×9 — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral X",
+   "art (186×248): Ten small cups on a rainbow (two concentric half-arcs) over a small house with one lit window; ground and hatching.",
+   "gold: The lit window — gold rect 10×9 — 1 gold.",
+   "oxblood: none",
+   "bottom band: TEN OF CUPS / The Arc of Cups"
+  ],
+  "geometry": "Rainbow: half-circles r 48 and r 88 centred (93,164), w 1.0. Cups s 28 on r 68 from angle π+0.3 to 2π−0.3. House: walls 76–110 × 189–212 (w 1.5); roof (70,190)(93,170)(116,190); window 88–98 × 195–204 gold. Ground y 212 w 1.4; hatch 12,214 162×20. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:347-365"
+ },
+ "cups-page": {
+  "what_it_shows": "Follows: RWS Page of Cups: a young page gazes at a fish rising out of his cup. Drawn: Page rank device: a small oxblood diamond at the top. A plain cup; out of it a gold fish rises head-up, its forked tail inside the bowl, one ink eye; ground below.",
+  "gold": "The fish — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "The Page's diamond (93,30), rx 4 ry 5.5."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Page rank device: a small oxblood diamond at the top. A plain cup; out of it a gold fish rises head-up, its forked tail inside the bowl, one ink eye; ground below.",
+   "gold: The fish — 1 gold.",
+   "oxblood: The Page's diamond (93,30), rx 4 ry 5.5.",
+   "bottom band: PAGE OF CUPS / The Fish in the Cup"
+  ],
+  "geometry": "Cup s 100 at (93,150). Fish body (gold smooth fill) (93,46)(103,70)(100,94)(93,104)(86,94)(83,70); tail lines (93,102)→(84,114) and →(102,114) w 1.2; eye ink dot r 1.6 at (90,62). Ground y 210 depth 22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1035-1042"
+ },
+ "cups-knight": {
+  "what_it_shows": "Follows: RWS Knight of Cups: a knight with a winged helmet and heels rides slowly, holding out a cup. Drawn: Knight rank device: the road — three bowed lines across the bottom. A full gold cup with wings: three feathers on each side sweeping up and out. The only winged card.",
+  "gold": "The cup's water (gilt emblem) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Knight rank device: the road — three bowed lines across the bottom. A full gold cup with wings: three feathers on each side sweeping up and out. The only winged card.",
+   "gold: The cup's water (gilt emblem) — 1 gold.",
+   "oxblood: none",
+   "bottom band: KNIGHT OF CUPS / The Slow Gallop"
+  ],
+  "geometry": "Wings: per side 3 curves (93±34, 72+9d) → (93±(54+4d), 60+7d) → (93±(74−6d), 52+10d), w 1.3 / 1.1 / 0.9. Cup emblem Spot(93,108, s 96) full. Road: curves (22,y−7)→(93,y+5)→(164,y−7) at y 180, 192, 204, w 1.5 / 1.25 / 1.0. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1078-1089, 1111-1116"
+ },
+ "cups-queen": {
+  "what_it_shows": "Follows: RWS Queen of Cups: a queen on a throne at the sea's edge gazes at an ornate lidded cup. Drawn: Queen rank device: a hand-wobbled ring round the emblem with an oxblood diamond at each side. Inside, a lidded cup: gold dome lid with a small oxblood finial. Sea ripples below the ring.",
+  "gold": "The lid — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "Ring diamonds (15,112) and (171,112), rx 4 ry 5.5; the lid's finial diamond."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Queen rank device: a hand-wobbled ring round the emblem with an oxblood diamond at each side. Inside, a lidded cup: gold dome lid with a small oxblood finial. Sea ripples below the ring.",
+   "gold: The lid — 1 gold.",
+   "oxblood: Ring diamonds (15,112) and (171,112), rx 4 ry 5.5; the lid's finial diamond.",
+   "bottom band: QUEEN OF CUPS / The Lidded Cup"
+  ],
+  "geometry": "Ring r 66 at (93,112), w 1.4, wobble 1.5, 28 segs. Cup s 86 at (93,124), lid. Ripples y 196, 3 rows, gap 9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1118-1126"
+ },
+ "cups-king": {
+  "what_it_shows": "Follows: RWS King of Cups: a king on a throne floating on a rough sea, holding a cup and sceptre. Drawn: King rank device: the squared seat (double square) crowned with a gold three-pointed crown. A plain cup on the seat; four rows of sea below: calm over deep water.",
+  "gold": "The crown — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): King rank device: the squared seat (double square) crowned with a gold three-pointed crown. A plain cup on the seat; four rows of sea below: calm over deep water.",
+   "gold: The crown — 1 gold.",
+   "oxblood: none",
+   "bottom band: KING OF CUPS / Calm Over Deep Water"
+  ],
+  "geometry": "Seat outer 35–151 × 58–172 w 1.8 wobble 1.2; inner 45–141 × 68–162 w 1.0. Crown (76,48)(75,30)(85,39)(93,24)(101,39)(111,30)(110,48). Cup s 80 at (93,116). Ripples y 190, 4 rows, gap 9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1144-1154"
+ },
+ "wands-ace": {
+  "what_it_shows": "Follows: RWS Ace of Wands: a hand from a cloud holds a sprouting wand; a castle on a hill below. Drawn: One heavy staff planted in the ground, six leaves up its length, budding at the top into a gold flame-shaped bud with nine rays of light around it.",
+  "gold": "The flame bud — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral I",
+   "art (186×248): One heavy staff planted in the ground, six leaves up its length, budding at the top into a gold flame-shaped bud with nine rays of light around it.",
+   "gold: The flame bud — 1 gold.",
+   "oxblood: none",
+   "bottom band: ACE OF WANDS / The Budding Staff"
+  ],
+  "geometry": "Ground y 214. Staff (93,214)→(93,58) w 3.0, 6 leaves, leaf ×1.8 (its own ink bud diamond sits at (93,55), mostly covered). Gold bud smooth fill (93,22)(102,40)(93,56)(84,40). Rays 9, r 16→30 round (93,40), offset 1.06π, w 0.9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:506-512"
+ },
+ "wands-2": {
+  "what_it_shows": "Follows: RWS Two of Wands: a man on a battlement holds a globe, one wand in hand, one fixed to the wall; the sea beyond. Drawn: Two staves standing on a crenellated wall; between them the world in gold — an orb with meridian, equator and parallels and a small cross on top; the sea beyond the wall as ripples.",
+  "gold": "The globe (gold disc r 25) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral II",
+   "art (186×248): Two staves standing on a crenellated wall; between them the world in gold — an orb with meridian, equator and parallels and a small cross on top; the sea beyond the wall as ripples.",
+   "gold: The globe (gold disc r 25) — 1 gold.",
+   "oxblood: none",
+   "bottom band: TWO OF WANDS / The World in Hand"
+  ],
+  "geometry": "Sea ripples y 146, 3 rows, gap 8. Wall: merlons 14 wide (top y 172), gaps 10 (y 184), period 24, w 1.4; horizontal hatch (courses) 12,186 162×28, gap 7; ground line y 214. Staves x 34 and 152, 172→36, w 2.0, 2 leaves. Orb at (93,104) r 25: gold dot + ring w 1.5; meridian ellipse rx 10 ry 25 (w 0.9); equator; parallels y 91, 117 (±21); cross: 79→66 vertical, bar at y 71 ±5 (w 1.3). (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:514-539"
+ },
+ "wands-3": {
+  "what_it_shows": "Follows: RWS Three of Wands: a figure on a cliff watches ships sail out, three wands planted beside him. Drawn: Three staves planted on a hatched cliff at the left; the horizon far out with two small ships, the nearer one coming in with a gold sail; four strokes of sea.",
+  "gold": "The incoming ship's sail — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral III",
+   "art (186×248): Three staves planted on a hatched cliff at the left; the horizon far out with two small ships, the nearer one coming in with a gold sail; four strokes of sea.",
+   "gold: The incoming ship's sail — 1 gold.",
+   "oxblood: none",
+   "bottom band: THREE OF WANDS / Ships on the Horizon"
+  ],
+  "geometry": "Horizon y 126 w 0.9. Ships (132,122) s 8 and (160,124) s 6.5 gilt. Sea strokes at y 146, 162, 178, 194 from x 124+3i to 172. Cliff (12,172)(108,172)(118,190)(114,214) w 1.5; hatch 12,174 96×40. Staves x 28, 58, 90 from 172 up to 40, 50, 34, w 2.0, 2 leaves. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:541-552"
+ },
+ "wands-4": {
+  "what_it_shows": "Follows: RWS Four of Wands: four wands hung with a garland; a couple celebrates before a castle. Drawn: Four staves hung with three sagging leafy garlands (the middle one lower), a gold-hearted flower hanging at the centre; beyond, the gate of home: two small crenellated towers and an arch.",
+  "gold": "The hanging flower's heart — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IV",
+   "art (186×248): Four staves hung with three sagging leafy garlands (the middle one lower), a gold-hearted flower hanging at the centre; beyond, the gate of home: two small crenellated towers and an arch.",
+   "gold: The hanging flower's heart — 1 gold.",
+   "oxblood: none",
+   "bottom band: FOUR OF WANDS / The Garland Raised"
+  ],
+  "geometry": "Towers 69–81 and 105–117 × 168–206 (w 1.3) with two merlons each; arch (81,206)(82,188)(93,180)(104,188)(105,206). Staves x 30, 70, 116, 156 from 206 to 48, w 1.9, 1 leaf. Garlands: sprig along bow((a,64), mid sag 84 (94 middle), (b,64)), 5 leaves size 6. Flower r 8 gilt at (93,104). Ground y 206. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:554-570"
+ },
+ "wands-5": {
+  "what_it_shows": "Follows: RWS Five of Wands: five youths brandish wands in a mock fight. Drawn: Five staves thrown across each other at clashing angles, a gold point at the crossing.",
+  "gold": "Diamond rx 6 ry 8 at (97,124) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral V",
+   "art (186×248): Five staves thrown across each other at clashing angles, a gold point at the crossing.",
+   "gold: Diamond rx 6 ry 8 at (97,124) — 1 gold.",
+   "oxblood: none",
+   "bottom band: FIVE OF WANDS / The Mock Battle"
+  ],
+  "geometry": "Staves (24,204)→(150,56), (164,212)→(36,70), (60,226)→(118,32), (16,134)→(172,104), (136,224)→(78,30), w 1.9, 1 leaf each. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:572-578"
+ },
+ "wands-6": {
+  "what_it_shows": "Follows: RWS Six of Wands: a laurel-crowned rider carries a wand wreathed in laurel through a cheering crowd. Drawn: Five shorter staves in a row; the fourth raised high above the rest with a gold bud and a laurel wreath hung just below its head.",
+  "gold": "The raised staff's bud — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VI",
+   "art (186×248): Five shorter staves in a row; the fourth raised high above the rest with a gold bud and a laurel wreath hung just below its head.",
+   "gold: The raised staff's bud — 1 gold.",
+   "oxblood: none",
+   "bottom band: SIX OF WANDS / The Laurel Carried"
+  ],
+  "geometry": "Staves x 22, 50, 78, 136, 164 from 208 up to 104/112 alternately, w 1.8. Raised x 108, 208→42, w 2.3, 2 leaves, gold bud. Wreath r 13 at (108,66). Ground y 208. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:580-588"
+ },
+ "wands-7": {
+  "what_it_shows": "Follows: RWS Seven of Wands: a man on high ground defends himself against six wands rising from below. Drawn: A hatched ridge of high ground across the middle; six staves rise from below, leaning in; above the ridge one staff is held across, its bud gold.",
+  "gold": "The held staff's bud — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VII",
+   "art (186×248): A hatched ridge of high ground across the middle; six staves rise from below, leaning in; above the ridge one staff is held across, its bud gold.",
+   "gold: The held staff's bud — 1 gold.",
+   "oxblood: none",
+   "bottom band: SEVEN OF WANDS / The High Ground"
+  ],
+  "geometry": "Ridge (10,128)(48,110)(100,104)(150,112)(176,128) w 1.6; hatch 12,112 162×14 w 0.55. Lower staves from y 240 at x 22, 48, 74, 112, 138, 164; heads lean 16% toward the centre at y 142 + 0.1·|x−93|; w 1.7. Held staff (36,96)→(152,40) w 2.3, 2 leaves, gold bud. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:590-598"
+ },
+ "wands-8": {
+  "what_it_shows": "Follows: RWS Eight of Wands: eight wands fly through the air over open country. Drawn: Eight parallel staves in flight, slanting down to the right toward the fields; the last one has a gold bud; a rolling hill line and two converging furrows below.",
+  "gold": "The eighth staff's bud — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VIII",
+   "art (186×248): Eight parallel staves in flight, slanting down to the right toward the fields; the last one has a gold bud; a rolling hill line and two converging furrows below.",
+   "gold: The eighth staff's bud — 1 gold.",
+   "oxblood: none",
+   "bottom band: EIGHT OF WANDS / Staves in Flight"
+  ],
+  "geometry": "Direction 0.52 rad (29.8°) down-right; staves 120 long, spaced 13 across, centred on (93,106); w 1.7. Hill (10,208)(48,198)(96,206)(140,194)(176,202) w 1.3; furrows (70,236)…(104,206) and (100,236)…(110,205) w 1.0. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:600-612"
+ },
+ "wands-9": {
+  "what_it_shows": "Follows: RWS Nine of Wands: a wounded, wary man leans on a staff before a fence of eight wands. Drawn: Eight staves standing like a fence behind a thin line of ground; in front, the ninth — heavier, leaning diagonally, being leant on — with a gold bud; a second ground line in front.",
+  "gold": "The ninth staff's bud — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IX",
+   "art (186×248): Eight staves standing like a fence behind a thin line of ground; in front, the ninth — heavier, leaning diagonally, being leant on — with a gold bud; a second ground line in front.",
+   "gold: The ninth staff's bud — 1 gold.",
+   "oxblood: none",
+   "bottom band: NINE OF WANDS / The Last Stave"
+  ],
+  "geometry": "Fence staves x 20 + 20.8k, 194 → 50/56/62 (k mod 3), w 1.6. Ground line y 194 (no hatch), hatch band 12,196 162×12 w 0.55. Ninth (70,228)→(118,64) w 2.7, 2 leaves, gold bud. Front line y 228 w 1.4. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:614-623"
+ },
+ "wands-10": {
+  "what_it_shows": "Follows: RWS Ten of Wands: a man bowed under a bundle of ten wands walks toward a town. Drawn: Ten staves fanned from one bundled foot, bowed forward, bound with a gold strap near the bottom; at the right a small house outline (the town ahead).",
+  "gold": "The binding strap (gold quad 34 × 8) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral X",
+   "art (186×248): Ten staves fanned from one bundled foot, bowed forward, bound with a gold strap near the bottom; at the right a small house outline (the town ahead).",
+   "gold: The binding strap (gold quad 34 × 8) — 1 gold.",
+   "oxblood: none",
+   "bottom band: TEN OF WANDS / The Bundle Carried"
+  ],
+  "geometry": "Foot (58,222) (each staff offset 1.4k, 0.8k); angles −1.42 → −0.80 rad (−81.4° → −45.8°), length 160, w 1.6. Strap centred 44 along −1.11 rad. House (150,222)(150,204)(158,196)(166,204)(166,222) w 1.1. Ground y 222 depth 16. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:625-642"
+ },
+ "wands-page": {
+  "what_it_shows": "Follows: RWS Page of Wands: a page in the desert, pyramids behind, looks at the top of his sprouting staff. Drawn: Page diamond at the top. Three small pyramids on the horizon; the staff stands centred with five leaves and a gold bud; ground.",
+  "gold": "The bud (gilt emblem) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "The Page's diamond (93,30)."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Page diamond at the top. Three small pyramids on the horizon; the staff stands centred with five leaves and a gold bud; ground.",
+   "gold: The bud (gilt emblem) — 1 gold.",
+   "oxblood: The Page's diamond (93,30).",
+   "bottom band: PAGE OF WANDS / The First Flame"
+  ],
+  "geometry": "Pyramids (36,210) s 22, (62,210) s 14, (150,210) s 19. Emblem Spot(93,124, s 116) → staff 193.6 → 66, w 2.6, 5 leaves ×1.5. Ground y 210 depth 22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1043-1048"
+ },
+ "wands-knight": {
+  "what_it_shows": "Follows: RWS Knight of Wands: a knight charges on a rearing horse, wand held high. Drawn: Knight road at the bottom; four speed-lines at the left; one staff thrust diagonally up to the right, gold bud.",
+  "gold": "The bud — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Knight road at the bottom; four speed-lines at the left; one staff thrust diagonally up to the right, gold bud.",
+   "gold: The bud — 1 gold.",
+   "oxblood: none",
+   "bottom band: KNIGHT OF WANDS / The Charge"
+  ],
+  "geometry": "Speed lines: 4, from (14/22, y+10) to (44/50, y) at y 96, 112, 128, 144, w 1.1 → 0.8. Staff (44,170)→(146,42) w 2.6, 4 leaves ×1.4, gold bud. Road as all knights. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1090-1095, 1111-1116"
+ },
+ "wands-queen": {
+  "what_it_shows": "Follows: RWS Queen of Wands: a queen enthroned holds a wand and a sunflower; lions and a black cat. Drawn: Queen ring with its two oxblood diamonds; inside, a staff set right of centre and a sunflower with a gold heart to its left; ground below.",
+  "gold": "The sunflower's heart — 1 gold (the staff is ungilded).",
+  "gold_detail": [],
+  "oxblood": [
+   "Ring diamonds."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Queen ring with its two oxblood diamonds; inside, a staff set right of centre and a sunflower with a gold heart to its left; ground below.",
+   "gold: The sunflower's heart — 1 gold (the staff is ungilded).",
+   "oxblood: Ring diamonds.",
+   "bottom band: QUEEN OF WANDS / The Sunflower Throne"
+  ],
+  "geometry": "Emblem Spot(107,112, s 96) → staff 169.6 → 64, ink bud. Sunflower r 15 at (67,96). Ground y 204 depth 22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1118-1122, 1127-1130"
+ },
+ "wands-king": {
+  "what_it_shows": "Follows: RWS King of Wands: a king on a throne carved with lions and salamanders holds a flowering staff. Drawn: Squared seat, gold crown; a flowering staff (ink bud) on the seat; deep ground.",
+  "gold": "The crown — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Squared seat, gold crown; a flowering staff (ink bud) on the seat; deep ground.",
+   "gold: The crown — 1 gold.",
+   "oxblood: none",
+   "bottom band: KING OF WANDS / The Flowering Staff"
+  ],
+  "geometry": "Emblem Spot(93,118, s 92) → staff 173.2 → 72. Ground y 190 depth 30. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1144-1150, 1155-1157"
+ },
+ "swords-ace": {
+  "what_it_shows": "Follows: RWS Ace of Swords: a hand from a cloud grasps an upright sword that pierces a crown, olive and palm hanging from it. Drawn: The great sword upright, point to the top; a gold three-pointed crown on the blade near its point; a leafy sprig hangs from each side of the crown; ground below.",
+  "gold": "The crown — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "The guard's two end diamonds."
+  ],
+  "anatomy": [
+   "top band: roman numeral I",
+   "art (186×248): The great sword upright, point to the top; a gold three-pointed crown on the blade near its point; a leafy sprig hangs from each side of the crown; ground below.",
+   "gold: The crown — 1 gold.",
+   "oxblood: The guard's two end diamonds.",
+   "bottom band: ACE OF SWORDS / The Crowned Blade"
+  ],
+  "geometry": "bigSword guard (93,176) → point (93,24), half 7, guard ±34. Crown (73,76)(72,60)(83,68)(93,54)(103,68)(114,60)(113,76). Sprigs from (93±20,72) via (±34,86) (±40,108) to (±36,132), 5 leaves. Ground line y 224 w 1.5; hatch 12,226 162×16 w 0.7. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:654-664"
+ },
+ "swords-2": {
+  "what_it_shows": "Follows: RWS Two of Swords: a blindfolded woman holds two crossed swords over her heart; a crescent moon over the sea. Drawn: Two swords crossed in an X, points up; between the blades a closed eye (lid curve and five lashes) — the blindfold; a gold crescent moon top right; the sea below.",
+  "gold": "The crescent — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral II",
+   "art (186×248): Two swords crossed in an X, points up; between the blades a closed eye (lid curve and five lashes) — the blindfold; a gold crescent moon top right; the sea below.",
+   "gold: The crescent — 1 gold.",
+   "oxblood: none",
+   "bottom band: TWO OF SWORDS / The Blindfold"
+  ],
+  "geometry": "Crescent (152,34) r 12 bite 8. Swords (52,186)→(146,46) and (134,186)→(40,46), w 1.7, guard 8. Eye lid (76,88)(84,94)(93,96)(102,94)(110,88) w 1.6; lashes 5 at x 80+6.5k, 5 long, w 0.9. Ripples y 210, 3 rows. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:666-677"
+ },
+ "swords-3": {
+  "what_it_shows": "Follows: RWS Three of Swords: a heart pierced by three swords under storm clouds and rain. Drawn: A large gold heart pierced by three swords — one vertical, two diagonal — under slanting rain and a scalloped cloud bank that caps the top.",
+  "gold": "The heart — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral III",
+   "art (186×248): A large gold heart pierced by three swords — one vertical, two diagonal — under slanting rain and a scalloped cloud bank that caps the top.",
+   "gold: The heart — 1 gold.",
+   "oxblood: none",
+   "bottom band: THREE OF SWORDS / The Pierced Heart"
+  ],
+  "geometry": "Rain 3 rows from y 64, x 20→166. Heart 84 wide centred (93,130). Swords (93,222)→(93,46), (40,208)→(136,60), (146,208)→(50,60), w 1.7, guard 9 (hilts below, points up through the heart). Cloud (93, top 40, half-width 82) drawn last, covering the upper tips. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:679-686"
+ },
+ "swords-4": {
+  "what_it_shows": "Follows: RWS Four of Swords: the effigy of a knight lies on a tomb, three swords hung above, one along the tomb. Drawn: Three swords hanging point-down side by side; below, a tomb: its lid, its box and a recessed panel with a gold diamond at its centre; the fourth sword laid along the lid. (No knight is drawn.)",
+  "gold": "The panel diamond rx 5 ry 6.5 at (93,189) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IV",
+   "art (186×248): Three swords hanging point-down side by side; below, a tomb: its lid, its box and a recessed panel with a gold diamond at its centre; the fourth sword laid along the lid. (No knight is drawn.)",
+   "gold: The panel diamond rx 5 ry 6.5 at (93,189) — 1 gold.",
+   "oxblood: none",
+   "bottom band: FOUR OF SWORDS / The Knight at Rest"
+  ],
+  "geometry": "Hung swords x 52, 93, 134 from 34 (hilt) to 126 (point), w 1.6, guard 7. Laid (30,160)→(158,160) w 1.6 guard 6. Lid line y 170 x18→168 w 1.9; box 24–162 × 170–208 w 1.5; panel 42–144 × 179–199 w 0.9. Ground y 208 depth 16. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:688-696"
+ },
+ "swords-5": {
+  "what_it_shows": "Follows: RWS Five of Swords: a smug figure gathers three swords while two defeated walk away; two swords lie on the ground; ragged sky. Drawn: Wind in three strokes at the top left; at the right three swords held together, points up, a gold point where they are gripped; two swords left lying on the ground at the left.",
+  "gold": "The grip diamond rx 4.5 ry 6 at (128,196) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral V",
+   "art (186×248): Wind in three strokes at the top left; at the right three swords held together, points up, a gold point where they are gripped; two swords left lying on the ground at the left.",
+   "gold: The grip diamond rx 4.5 ry 6 at (128,196) — 1 gold.",
+   "oxblood: none",
+   "bottom band: FIVE OF SWORDS / The Emptied Field"
+  ],
+  "geometry": "Wind at y 40, 50, 60 from x 16+6k to 84−4k. Taken swords hilts (122,176) (128,172) (134,176) → tips (104,44) (126,36) (148,48), w 1.6 guard 7. Lying (18,206)→(92,200) and (88,216)→(22,220), w 1.5 guard 6. Ground line y 226. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:698-711"
+ },
+ "swords-6": {
+  "what_it_shows": "Follows: RWS Six of Swords: a ferryman poles a boat with a woman, a child and six swords toward calmer water. Drawn: A boat hull with six swords stood upright in it (points down into the boat), a punt pole slanting through; choppy zigzag water at the left, smooth water at the right; on the far shore a small hill and a gold half-sun.",
+  "gold": "The half-sun (semicircle r 9 at (154,58)) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VI",
+   "art (186×248): A boat hull with six swords stood upright in it (points down into the boat), a punt pole slanting through; choppy zigzag water at the left, smooth water at the right; on the far shore a small hill and a gold half-sun.",
+   "gold: The half-sun (semicircle r 9 at (154,58)) — 1 gold.",
+   "oxblood: none",
+   "bottom band: SIX OF SWORDS / The Crossing"
+  ],
+  "geometry": "Far shore y 58 x104→174; hill (104,58)(118,50)(132,58). Swords x 56, 70, 84, 100, 114, 128, hilts y 94/100, points y 176, w 1.4 guard 5. Hull (paper fill + w 1.6 outline) (30,164)(156,164)(148,180)(126,192)(93,196)(60,192)(38,180). Pole (152,222)→(140,70) w 1.4. Water rows y 204, 213, 222: zigzag x14→76 (8 pt teeth 3.5 tall) and smooth x104→172. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:713-738"
+ },
+ "swords-7": {
+  "what_it_shows": "Follows: RWS Seven of Swords: a man sneaks away from a camp carrying five swords, leaving two stuck in the ground. Drawn: Two swords left standing at the left; five swords carried off in a bundle toward the upper left, a gold point where they are held; a trail of six footprint dots.",
+  "gold": "The grip diamond at (146,166) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VII",
+   "art (186×248): Two swords left standing at the left; five swords carried off in a bundle toward the upper left, a gold point where they are held; a trail of six footprint dots.",
+   "gold: The grip diamond at (146,166) — 1 gold.",
+   "oxblood: none",
+   "bottom band: SEVEN OF SWORDS / The Quiet Theft"
+  ],
+  "geometry": "Standing swords x 30 (124→204) and x 54 (132→204), w 1.5 guard 6. Carried: hilts (134+3.5k, 154−2k) → tips (64,44) (82,34) (102,30) (120,36) (74,64), w 1.4 guard 6. Ground line y 204. Footprints ink dots r 1.7 at x 84+15k, y 214/219. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:740-752"
+ },
+ "swords-8": {
+  "what_it_shows": "Follows: RWS Eight of Swords: a bound, blindfolded woman stands surrounded by eight swords; the way out is open. Drawn: Eight swords stood hilt-up in an oval fence, drawn back to front; the gold point marks the empty place inside; the front of the oval is open and two lines lead out toward the viewer.",
+  "gold": "The empty-place diamond rx 6 ry 8 at (93,176) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VIII",
+   "art (186×248): Eight swords stood hilt-up in an oval fence, drawn back to front; the gold point marks the empty place inside; the front of the oval is open and two lines lead out toward the viewer.",
+   "gold: The empty-place diamond rx 6 ry 8 at (93,176) — 1 gold.",
+   "oxblood: none",
+   "bottom band: EIGHT OF SWORDS / The Open Fence"
+  ],
+  "geometry": "Fence ellipse centre (93,192) rx 68 ry 24; 9 slots with the front one (angle π/2) left empty; each sword hilt at y−96, point at y; w 1.5 guard 6; sorted back-to-front. Way out: (83,214)→(75,240) and (103,214)→(111,240) w 0.9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:754-766"
+ },
+ "swords-9": {
+  "what_it_shows": "Follows: RWS Nine of Swords: a woman sits up in bed, face in hands, nine swords on the dark wall; a quilt of roses and signs. Drawn: Nine swords laid horizontally one above another, alternating direction; below, a bed: headboard post, mattress, a quilt of six small ink diamonds with a gold-hearted flower among them, and the foot post.",
+  "gold": "The quilt flower's heart — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IX",
+   "art (186×248): Nine swords laid horizontally one above another, alternating direction; below, a bed: headboard post, mattress, a quilt of six small ink diamonds with a gold-hearted flower among them, and the foot post.",
+   "gold: The quilt flower's heart — 1 gold.",
+   "oxblood: none",
+   "bottom band: NINE OF SWORDS / The Night Watch"
+  ],
+  "geometry": "Swords at y 32 + 14.5k (k 0–8), w 1.4 guard 5, even k hilt-left (30→164), odd hilt-right (156→22). Headboard 18–30 × 166–214 w 1.4; quilt 30–168 × 184–204 w 1.3; diamonds (ink outline) rx 4 ry 5 at x 46+22k, y 194; flower r 6 gilt at (101,194); foot post (166,204→214). Floor y 214. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:768-785"
+ },
+ "swords-10": {
+  "what_it_shows": "Follows: RWS Ten of Swords: a man lies face down, ten swords in his back, under a black sky with a yellow dawn on the horizon. Drawn: A night sky of fine diagonal hatching; below it a band of gold dawn on the horizon, then water; ten swords stood point-down in a row into the low mound of the fallen; ground.",
+  "gold": "The dawn band (rect 12–174 × 146–154) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral X",
+   "art (186×248): A night sky of fine diagonal hatching; below it a band of gold dawn on the horizon, then water; ten swords stood point-down in a row into the low mound of the fallen; ground.",
+   "gold: The dawn band (rect 12–174 × 146–154) — 1 gold.",
+   "oxblood: none",
+   "bottom band: TEN OF SWORDS / Dawn Behind the Blades"
+  ],
+  "geometry": "Sky hatch 12,16 162×92, gap 5.5, −0.8 rad, w 0.5. Dawn gold 12→174 × 146→154; horizon line y 154 w 1.2; ripples y 164, 2 rows, gap 8. Swords x 24 + 15.3k, hilts y 104/110 → points y 198, w 1.4 guard 5. Mound (14,208)(38,196)(80,194)(124,196)(160,198)(172,208) w 1.9. Ground y 214 depth 16. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:787-798"
+ },
+ "swords-page": {
+  "what_it_shows": "Follows: RWS Page of Swords: a page on a windy hilltop holds his sword up; birds fly in a cloudy sky. Drawn: Page diamond at the top. Three strokes of wind and three birds; the great sword upright with a gold point at the guard; ground.",
+  "gold": "The guard diamond (gilt emblem) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "Page diamond; the guard's two end diamonds."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Page diamond at the top. Three strokes of wind and three birds; the great sword upright with a gold point at the guard; ground.",
+   "gold: The guard diamond (gilt emblem) — 1 gold.",
+   "oxblood: Page diamond; the guard's two end diamonds.",
+   "bottom band: PAGE OF SWORDS / The Watchful Wind"
+  ],
+  "geometry": "Wind (18→62, 58), (26→70, 70), (120→166, 64). Birds (40,40) s 7, (148,42) s 6, (134,30) s 4.5. Emblem Spot(93,136, s 118) → guard y 171.4, point y 62.8, guard ±28.3. Ground y 210 depth 22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1049-1057"
+ },
+ "swords-knight": {
+  "what_it_shows": "Follows: RWS Knight of Swords: a knight charges headlong into the wind, sword raised. Drawn: Knight road; four strokes of wind at the left; the great sword thrust diagonally up-right, a gold point at its guard.",
+  "gold": "The guard diamond at (62,164) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "The guard's two end diamonds."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Knight road; four strokes of wind at the left; the great sword thrust diagonally up-right, a gold point at its guard.",
+   "gold: The guard diamond at (62,164) — 1 gold.",
+   "oxblood: The guard's two end diamonds.",
+   "bottom band: KNIGHT OF SWORDS / Into the Wind"
+  ],
+  "geometry": "Wind 4 strokes from x 14 to 70−6k at y 78 + 14k, w 1.1 → 0.8. bigSword guard (62,164) → point (148,38), half 6, guard 20. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1096-1101, 1111-1116"
+ },
+ "swords-queen": {
+  "what_it_shows": "Follows: RWS Queen of Swords: a queen, sword upright in one hand, the other raised; clouds at her feet; one bird high above. Drawn: Queen ring with its two diamonds; a single bird above the ring; the great sword upright inside with a gold point at the guard; a cloud bank at the bottom.",
+  "gold": "The guard diamond — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "Ring diamonds; the guard's two end diamonds."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Queen ring with its two diamonds; a single bird above the ring; the great sword upright inside with a gold point at the guard; a cloud bank at the bottom.",
+   "gold: The guard diamond — 1 gold.",
+   "oxblood: Ring diamonds; the guard's two end diamonds.",
+   "bottom band: QUEEN OF SWORDS / The Raised Hand"
+  ],
+  "geometry": "Bird (93,32) s 8. Emblem Spot(93,118, s 100) → guard y 148, point y 56, guard ±24. Cloud (93, 196, half-width 72). (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1118-1122, 1131-1134"
+ },
+ "swords-king": {
+  "what_it_shows": "Follows: RWS King of Swords: a king on a throne carved with butterflies, sword upright. Drawn: Squared seat with a gold crown; a butterfly on each top corner of the seat; the great sword upright on the seat (ungilded); deep ground.",
+  "gold": "The crown — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "The guard's two end diamonds."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Squared seat with a gold crown; a butterfly on each top corner of the seat; the great sword upright on the seat (ungilded); deep ground.",
+   "gold: The crown — 1 gold.",
+   "oxblood: The guard's two end diamonds.",
+   "bottom band: KING OF SWORDS / The Upright Blade"
+  ],
+  "geometry": "Butterflies s 7 at (35,56) and (151,56). Emblem Spot(93,124, s 96) → guard y 152.8, point y 64.5, guard ±23. Ground y 190 depth 30. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1144-1150, 1158-1162"
+ },
+ "pentacles-ace": {
+  "what_it_shows": "Follows: RWS Ace of Pentacles: a hand from a cloud offers a pentacle over a garden; a hedged archway leads to distant mountains. Drawn: One large gilt pentacle ringed by thirty-six short radiant ticks; below it the hedged arch of a garden gate — a double arch fringed with small hedge strokes — and a path narrowing through it.",
+  "gold": "The pentacle disc — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral I",
+   "art (186×248): One large gilt pentacle ringed by thirty-six short radiant ticks; below it the hedged arch of a garden gate — a double arch fringed with small hedge strokes — and a path narrowing through it.",
+   "gold: The pentacle disc — 1 gold.",
+   "oxblood: none",
+   "bottom band: ACE OF PENTACLES / The Garden Gate"
+  ],
+  "geometry": "Pentacle (93,84) r 48 gilt; ticks 36 × 5 long from r 52. Arch: two concentric half-circles r 34 (w 1.1) and r 46 (w 1.6) centred (93,178), legs to y 228; 13 hedge strokes between r 36 and r 44; 4 side strokes per side at y 186–219. Path (80,228)→(90,190) and (106,228)→(96,190). Ground line y 228 x10→176 w 1.4. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:810-838"
+ },
+ "pentacles-2": {
+  "what_it_shows": "Follows: RWS Two of Pentacles: a juggler keeps two pentacles moving in an infinity loop; ships ride high waves behind. Drawn: An upright figure-of-eight (a doubled lemniscate) with a gilt pentacle in each loop; high waves below with two small ships.",
+  "gold": "Both pentacles gilt — 2 golds (exception).",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral II",
+   "art (186×248): An upright figure-of-eight (a doubled lemniscate) with a gilt pentacle in each loop; high waves below with two small ships.",
+   "gold: Both pentacles gilt — 2 golds (exception).",
+   "oxblood: none",
+   "bottom band: TWO OF PENTACLES / The Endless Juggle"
+  ],
+  "geometry": "Lemniscates centred (93,108), a = 88 (w 1.5) and 80 (w 0.9), 36 points, vertical. Pentacles (93,68) and (93,148) r 21 gilt. Waves y 212 (crest 8, w 1.2) and y 224 (crest 5, w 1.0), 9 points 20.25 apart. Ships (52,202) s 6 and (140,204) s 5. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:840-860"
+ },
+ "pentacles-3": {
+  "what_it_shows": "Follows: RWS Three of Pentacles: a stonemason works in a cathedral, consulting a monk and an architect; three pentacles carved in the arch. Drawn: A tall pointed Gothic arch (double line) with three pentacles carved in it — the top one gilt, two below; the mason's bench (a plank on trestles) beneath.",
+  "gold": "The top pentacle — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral III",
+   "art (186×248): A tall pointed Gothic arch (double line) with three pentacles carved in it — the top one gilt, two below; the mason's bench (a plank on trestles) beneath.",
+   "gold: The top pentacle — 1 gold.",
+   "oxblood: none",
+   "bottom band: THREE OF PENTACLES / The Carved Arch"
+  ],
+  "geometry": "Arch: outer (30,228)(30,150)(33,112)(46,74)(66,44)(93,24) mirrored, w 1.7; inner inset 9, w 1.0. Pentacles r 17: (93,70) gilt, (67,116), (119,116). Bench plank y 186 x46→140 w 1.8; trestles at x 56 and 130 (±7 feet to y 214). Floor y 228. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:862-880"
+ },
+ "pentacles-4": {
+  "what_it_shows": "Follows: RWS Four of Pentacles: a man clutches a pentacle, one balanced on his crown, two under his feet; a city behind. Drawn: A stepped city skyline across the middle; one pentacle on top (worn like a crown), one big gilt pentacle held tight by two curving arms, two pentacles on the ground (stood on).",
+  "gold": "The clutched pentacle — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IV",
+   "art (186×248): A stepped city skyline across the middle; one pentacle on top (worn like a crown), one big gilt pentacle held tight by two curving arms, two pentacles on the ground (stood on).",
+   "gold: The clutched pentacle — 1 gold.",
+   "oxblood: none",
+   "bottom band: FOUR OF PENTACLES / The Tight Grip"
+  ],
+  "geometry": "Skyline stepped polyline from blocks (12,136)(28,124)(40,140)(52,118)(66,132)(120,128)(134,114)(148,134)(162,122)(174,138) to base y 158, w 1.0. Pentacles: (93,38) r 17; (93,108) r 25 gilt; (60,194) and (126,194) r 17. Arms (93±30,78)(±38,104)(±30,128)(±8,140) w 1.6. Ground line y 214. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:882-900"
+ },
+ "pentacles-5": {
+  "what_it_shows": "Follows: RWS Five of Pentacles: two beggars in the snow pass beneath a lit stained-glass church window. Drawn: A round-headed window with mullion and transom, five pentacles in its lights, the centre one gilt (the lit window); snow dots all around; footprints in the snow below the ground line.",
+  "gold": "The centre pentacle — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral V",
+   "art (186×248): A round-headed window with mullion and transom, five pentacles in its lights, the centre one gilt (the lit window); snow dots all around; footprints in the snow below the ground line.",
+   "gold: The centre pentacle — 1 gold.",
+   "oxblood: none",
+   "bottom band: FIVE OF PENTACLES / The Lit Window"
+  ],
+  "geometry": "Window double outline: legs at x 46/140 (inset 7), arch centred (93,70) radii 47×44, down to y 172; w 1.7 / 1.0. Sill y 172 x38→148 w 1.8. Mullion x 93 34→165, transom y 118 53→133 (w 0.7). Pentacles r 13 at (72,88) (114,88) (72,148) (114,148); centre (93,118) r 14 gilt. 15 snow dots r 1.5; ground y 206 w 1.3; 7 dots r 1.6 at x 28+21k, y 216/221. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:902-927"
+ },
+ "pentacles-6": {
+  "what_it_shows": "Follows: RWS Six of Pentacles: a merchant holding scales gives coins to two kneeling beggars. Drawn: Six pentacles in two rows of three above a balance scale; a gold point at the scale's fulcrum; ground.",
+  "gold": "The fulcrum diamond rx 6.5 ry 8.5 at (93,132) — 1 gold (all six pentacles plain).",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VI",
+   "art (186×248): Six pentacles in two rows of three above a balance scale; a gold point at the scale's fulcrum; ground.",
+   "gold: The fulcrum diamond rx 6.5 ry 8.5 at (93,132) — 1 gold (all six pentacles plain).",
+   "oxblood: none",
+   "bottom band: SIX OF PENTACLES / The Fair Measure"
+  ],
+  "geometry": "Pentacles r 16 at x 50, 93, 136 in rows y 48, 92. Post (93,132→204) w 1.9, foot ±16 at 204; beam y 132 x44→142 w 1.8. Pans at x 44 and 142: cords to ±11 at y 160 (w 0.9), bowl (x−15,160)(x,170)(x+15,160) w 1.5, rim w 1.0. Ground y 208 depth 16. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:929-945"
+ },
+ "pentacles-7": {
+  "what_it_shows": "Follows: RWS Seven of Pentacles: a farmer leans on his hoe, contemplating seven pentacles growing on a bush. Drawn: A tall winding vine with seven pentacles on short stems like fruit, one ripe in gold low on the vine; a few leaves; the hoe leant at the right.",
+  "gold": "The pentacle at (82,156) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VII",
+   "art (186×248): A tall winding vine with seven pentacles on short stems like fruit, one ripe in gold low on the vine; a few leaves; the hoe leant at the right.",
+   "gold: The pentacle at (82,156) — 1 gold.",
+   "oxblood: none",
+   "bottom band: SEVEN OF PENTACLES / The Patient Vine"
+  ],
+  "geometry": "Vine (80,214)(76,180)(86,140)(80,100)(84,60)(78,30) w 1.7. Fruit r 15 at (56,56) (104,46) (60,108) (112,98) (140,142) (82,156)g (44,168). Leaves at y 130, 76, 186, 40. Hoe handle (164,214)→(150,44) w 1.8; blade (154,208)(172,204)(173,212)(155,216) w 1.2. Ground y 214 depth 16. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:947-961"
+ },
+ "pentacles-8": {
+  "what_it_shows": "Follows: RWS Eight of Pentacles: a craftsman carves pentacles at his bench; finished ones hang on a post beside him. Drawn: A post at the left with six finished pentacles; a bench with one gilt pentacle on it being made, a chisel at it and a mallet raised; one more pentacle on the floor under the bench.",
+  "gold": "The pentacle on the bench — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral VIII",
+   "art (186×248): A post at the left with six finished pentacles; a bench with one gilt pentacle on it being made, a chisel at it and a mallet raised; one more pentacle on the floor under the bench.",
+   "gold: The pentacle on the bench — 1 gold.",
+   "oxblood: none",
+   "bottom band: EIGHT OF PENTACLES / The Workbench"
+  ],
+  "geometry": "Post x 40, 222→24 w 2.3; six pentacles r 13 at y 40…190 step 30. Bench top y 168 x80→172 w 2.0; legs x 88, 164 to 214 w 1.4. Gilt pentacle (124,150) r 16. Chisel (148,128)→(138,138) w 1.6; mallet handle (150,124)→(162,110) w 1.2, head square 156–168 × 104–114. Floor pentacle (116,203) r 10. Ground y 214 depth 14. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:963-975"
+ },
+ "pentacles-9": {
+  "what_it_shows": "Follows: RWS Nine of Pentacles: a woman in a vineyard with a hooded falcon; nine pentacles among the vines; a walled estate. Drawn: Two leafy vines rising from either side to meet overhead like a bower, bunches of grapes hanging from them; nine pentacles in a 3×3 grid inside, the centre one gilt; a stone garden wall below.",
+  "gold": "The centre pentacle — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral IX",
+   "art (186×248): Two leafy vines rising from either side to meet overhead like a bower, bunches of grapes hanging from them; nine pentacles in a 3×3 grid inside, the centre one gilt; a stone garden wall below.",
+   "gold: The centre pentacle — 1 gold.",
+   "oxblood: none",
+   "bottom band: NINE OF PENTACLES / The Walled Garden"
+  ],
+  "geometry": "Vines (93±70,206)(±76,150)(±66,90)(±40,44)(93,30), 7 leaves size 7; grapes at (93±74,104) and (93±54,52). Pentacles r 14 at x 58, 93, 128, y 70, 118, 166. Wall: line y 206 w 1.5; horizontal hatch 12,208 162×18 gap 7; vertical joints every 22 from x 24 (y 208→226). (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:977-990"
+ },
+ "pentacles-10": {
+  "what_it_shows": "Follows: RWS Ten of Pentacles: a family and their dogs under an archway, ten pentacles laid out as the Kabbalistic Tree of Life. Drawn: The Tree of Life: ten pentacles at the ten sephirot joined by its twenty-two paths (thin lines stopping at each disc's edge); the lowest — the root, Malkuth — gilt.",
+  "gold": "The bottom pentacle (93,226) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: roman numeral X",
+   "art (186×248): The Tree of Life: ten pentacles at the ten sephirot joined by its twenty-two paths (thin lines stopping at each disc's edge); the lowest — the root, Malkuth — gilt.",
+   "gold: The bottom pentacle (93,226) — 1 gold.",
+   "oxblood: none",
+   "bottom band: TEN OF PENTACLES / The Tree of Ten"
+  ],
+  "geometry": "Nodes (r 13): (93,30) (138,60) (48,60) (138,112) (48,112) (93,136) (138,168) (48,168) (93,190) (93,226). 22 paths: 0-1 0-2 0-5 1-2 1-5 2-5 1-3 2-4 3-4 3-5 4-5 3-6 4-7 5-6 5-7 5-8 6-7 6-8 7-8 6-9 7-9 8-9, w 0.8, trimmed 13 pt at each end. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:992-1007"
+ },
+ "pentacles-page": {
+  "what_it_shows": "Follows: RWS Page of Pentacles: a page in a green field studies the pentacle he holds up; a ploughed field and trees. Drawn: Page diamond at the top. A gilt pentacle floating centre; a small sapling with five leaves at the lower left; five gently bowed furrows across the bottom (no ground hatch). Noted as one of the plain courts.",
+  "gold": "The pentacle (gilt emblem) — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "The Page's diamond (93,30)."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Page diamond at the top. A gilt pentacle floating centre; a small sapling with five leaves at the lower left; five gently bowed furrows across the bottom (no ground hatch). Noted as one of the plain courts.",
+   "gold: The pentacle (gilt emblem) — 1 gold.",
+   "oxblood: The Page's diamond (93,30).",
+   "bottom band: PAGE OF PENTACLES / The Coin Studied"
+  ],
+  "geometry": "Emblem Spot(93,110, s 100) → r 36. Sapling (34,186)→(32,148) w 1.4; leaves to (20,150) (44,146) (24,166) (44,164) (32,136) width 2.6. Furrows 5 at y 184 + 10i, bowed by cos with depth 6−i, x 12→174, w 1.2. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1058-1073"
+ },
+ "pentacles-knight": {
+  "what_it_shows": "Follows: RWS Knight of Pentacles: a knight sits still on a heavy horse, looking over a ploughed field. Drawn: A gilt pentacle and four straight furrows beneath — 'the knight who does not hurry': the only knight given furrows instead of the road. Nothing else: the plainest card in the deck.",
+  "gold": "The pentacle — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): A gilt pentacle and four straight furrows beneath — 'the knight who does not hurry': the only knight given furrows instead of the road. Nothing else: the plainest card in the deck.",
+   "gold: The pentacle — 1 gold.",
+   "oxblood: none",
+   "bottom band: KNIGHT OF PENTACLES / The Still Horse"
+  ],
+  "geometry": "Emblem Spot(93,104, s 112) → r 40.3. Furrows 4: y 178 + 12i from x 18+3i to 168−3i, w 1.5 → 0.9. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1102-1110"
+ },
+ "pentacles-queen": {
+  "what_it_shows": "Follows: RWS Queen of Pentacles: a queen in a garden holds a pentacle in her lap under a bower of roses; a rabbit. Drawn: Queen ring with its diamonds; five small flowers along the top of the ring (the rose bower); a gilt pentacle inside; ground.",
+  "gold": "The pentacle — 1 gold.",
+  "gold_detail": [],
+  "oxblood": [
+   "Ring diamonds."
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Queen ring with its diamonds; five small flowers along the top of the ring (the rose bower); a gilt pentacle inside; ground.",
+   "gold: The pentacle — 1 gold.",
+   "oxblood: Ring diamonds.",
+   "bottom band: QUEEN OF PENTACLES / The Rose Bower"
+  ],
+  "geometry": "Flowers r 7 on the ring (r 66) at angles −90° ± 0.42k rad (−138°…−42°). Emblem Spot(93,116, s 92) → r 33.1. Ground y 204 depth 22. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1118-1122, 1135-1141"
+ },
+ "pentacles-king": {
+  "what_it_shows": "Follows: RWS King of Pentacles: a king on a throne carved with bulls' heads, robed in grapevines, holding a pentacle. Drawn: Squared seat with a gold crown; bull's horns curling up from its two top corners; a bunch of grapes in each upper corner inside; a plain pentacle on the seat; deep ground.",
+  "gold": "The crown — 1 gold (the pentacle is ungilded).",
+  "gold_detail": [],
+  "oxblood": [
+   "none"
+  ],
+  "anatomy": [
+   "top band: EMPTY (courts have no numeral)",
+   "art (186×248): Squared seat with a gold crown; bull's horns curling up from its two top corners; a bunch of grapes in each upper corner inside; a plain pentacle on the seat; deep ground.",
+   "gold: The crown — 1 gold (the pentacle is ungilded).",
+   "oxblood: none",
+   "bottom band: KING OF PENTACLES / The Fruitful Seat"
+  ],
+  "geometry": "Horns (93±58,58)(±70,50)(±72,36) w 1.5. Grapes s 2.8 at (49,74) and (137,74). Emblem Spot(93,124, s 88) → r 31.7. Ground y 190 depth 30. (All coordinates in the 186×248 art space; add (20,52) for card space.)",
+  "source": "Sources/Arcana/Suits.swift:1144-1150, 1163-1169"
+ }
+}

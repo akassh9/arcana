@@ -1,0 +1,55 @@
+// ===================================================================
+//  Render-tool probe (appended to the scratch copy of Chamber.swift by
+//  patch.py, never to the repo's). It only calls the near sky's own
+//  painters, so each element is drawn exactly as the app draws it.
+// ===================================================================
+
+extension NearSky {
+  static func probe(game: Game, origin: CGSize, focus: CGPoint, ringR: CGFloat) -> NearSky {
+    NearSky(
+      game: game, pointer: Pointer(), origin: origin, focus: focus, ringR: ringR,
+      reduceMotion: false)
+  }
+
+  /// The whole near sky, as the layer draws it at `now`.
+  func probeAll(size: CGSize, now: TimeInterval) -> SkyPaint { paint(size: size, now: now) }
+
+  func probeBlooms(size: CGSize, t: Double, breath: Double) -> SkyPaint {
+    var p = SkyPaint()
+    paintBlooms(&p, size: size, t: t, tilt: .zero, breath: breath)
+    return p
+  }
+
+  func probeGlints(
+    size: CGSize, t: Double, charge: Double, breath: Double, star: Answer.State?
+  ) -> SkyPaint {
+    var p = SkyPaint()
+    paintGlints(&p, size: size, t: t, charge: charge, tilt: .zero, breath: breath, star: star)
+    return p
+  }
+
+  func probeRing(charge: Double, breath: Double, shown: Double) -> SkyPaint {
+    var p = SkyPaint()
+    paintRing(&p, charge: charge, breath: breath, shown: shown)
+    return p
+  }
+
+  func probeMotes(size: CGSize, t: Double, charge: Double, breath: Double) -> SkyPaint {
+    var p = SkyPaint()
+    paintMotes(&p, size: size, t: t, charge: charge, breath: breath)
+    return p
+  }
+
+  func probeGiven(points: [CGPoint], of n: Int, charge: Double, peak: Double) -> SkyPaint {
+    var p = SkyPaint()
+    paintGiven(&p, points: points, of: n, charge: charge, peak: peak)
+    return p
+  }
+
+  func probeFlashes(t: Double, flashes: [Flash]) -> SkyPaint {
+    var p = SkyPaint()
+    paintFlashes(&p, t: t, flashes: flashes)
+    return p
+  }
+}
+

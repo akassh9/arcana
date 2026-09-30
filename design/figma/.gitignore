@@ -1,0 +1,35 @@
+# Only the tools are committed. Everything they make stays local (about 2.5 GB):
+# re-render with render/<family>/ (see each README) and rebuild the Figma file with build/rebuild.sh.
+assets/
+out/
+render/**/bin/
+render/**/src/
+render/**/lib/
+render/**/work/
+render/**/out/
+render/**/view/
+render/**/scratch/
+render/**/measure/
+render/**/_check/
+render/**/check/
+render/**/ref/
+render/**/tmp/
+render/**/native/
+render/**/*.log
+render/**/*.png
+render/**/*.jpg
+render/**/*.mp4
+render/**/*.mov
+render/**/*.wav
+render/**/*.pdf
+render/**/*.caf
+# compiled tools that live beside their sources
+render/sky/mksky
+render/sky/pxt
+render/surfaces/*-probe/Arcana
+render/surfaces/*-probe/Arcana-window
+render/type-ink/contact/contact
+render/type-ink/contact/px
+
+# The repo ignores every build/ folder; this one holds the Figma build steps.
+!build/

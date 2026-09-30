@@ -1,0 +1,22 @@
+# seconds into docs/demo.mp4, and a name
+0.8 01-room-title-light
+3.0 02-spreads
+6.5 03-question-writing
+9.5 04-question-written
+12.0 05-hold
+13.3 06-giving
+14.3 07-cut
+16.5 08-ribbon-hand
+20.0 09-cards-drawn
+22.5 10-three-cards-writing
+27.5 11-star-answers-in-the-sky
+30.5 12-verse
+33.8 13-hover
+37.5 14-altar
+41.5 15-return
+43.5 16-cards-go-home
+45.5 17-moons-door
+47.5 18-remembering
+49.5 19-remembered
+56.5 20-close
+57.35 21-fade-to-pearl

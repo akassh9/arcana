@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<body style="margin:0;padding:10px 12px;font:12px -apple-system,system-ui,sans-serif;color:#3a3530;background:#f9f7f2">
+<div id="s">Waiting for the server on this Mac…</div>
+<script>
+const BASE = 'http://localhost:7719'
+const say = t => { document.getElementById('s').textContent = t }
+const toMain = m => parent.postMessage({ pluginMessage: m }, '*')
+let busy = false
+
+onmessage = async e => {
+  const m = e.data.pluginMessage
+  if (!m) return
+  try {
+    if (m.type === 'result') {
+      await fetch(BASE + '/result', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(m) })
+      busy = false
+      say('Connected · idle')
+    } else if (m.type === 'fetch') {
+      const r = await fetch(BASE + '/a/' + m.path)
+      if (!r.ok) throw new Error(r.status + ' ' + m.path)
+      toMain({ type: 'reply', rid: m.rid, bytes: new Uint8Array(await r.arrayBuffer()) })
+    } else if (m.type === 'fetchText') {
+      const r = await fetch(BASE + '/a/' + m.path)
+      if (!r.ok) throw new Error(r.status + ' ' + m.path)
+      toMain({ type: 'reply', rid: m.rid, text: await r.text() })
+    } else if (m.type === 'save') {
+      const r = await fetch(BASE + '/save?path=' + encodeURIComponent(m.path), { method: 'POST', body: m.bytes })
+      if (!r.ok) throw new Error(r.status + ' save ' + m.path)
+      toMain({ type: 'reply', rid: m.rid, text: 'saved' })
+    } else if (m.type === 'status') {
+      say(m.text)
+    }
+  } catch (err) {
+    if (m.rid) toMain({ type: 'reply', rid: m.rid, error: String(err) })
+    else say(String(err))
+  }
+}
+
+async function loop() {
+  for (;;) {
+    if (busy) { await new Promise(r => setTimeout(r, 200)); continue }
+    try {
+      const r = await fetch(BASE + '/next')
+      if (r.status === 200) {
+        const job = await r.json()
+        busy = true
+        say('Building… (' + job.id + ')')
+        toMain({ type: 'run', id: job.id, code: job.code })
+      } else {
+        say('Connected · idle')
+      }
+    } catch (err) {
+      say('Waiting for the server on this Mac…')
+      await new Promise(r => setTimeout(r, 2000))
+    }
+  }
+}
+loop()
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "Arcana Bridge",
+  "id": "arcana-bridge-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:7719"],
+    "reasoning": "Talks only to a server on this Mac that serves the Arcana handoff assets."
+  }
+}
